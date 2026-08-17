@@ -66,7 +66,10 @@ pub fn position_launcher(app: &AppHandle) -> Result<(), String> {
 /// Docks the launcher to the bottom of the active monitor's work area. `work_area`
 /// already excludes the Dock and the menu bar, so the bar floats right above the Dock.
 fn position_window_as_bottom_overlay(window: &WebviewWindow) -> Result<(), String> {
-    let Some(monitor) = window.current_monitor().map_err(|error| error.to_string())? else {
+    let Some(monitor) = window
+        .current_monitor()
+        .map_err(|error| error.to_string())?
+    else {
         window
             .set_size(Size::Logical(LogicalSize {
                 width: LAUNCHER_WIDTH,

@@ -19,7 +19,10 @@ pub fn search_clips(
     category_id: Option<String>,
     limit: Option<i64>,
 ) -> CommandResult<Vec<Clip>> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::clips::search(
         &connection,
         query.as_deref().unwrap_or_default(),
@@ -32,7 +35,10 @@ pub fn search_clips(
 
 #[tauri::command]
 pub fn get_categories(state: State<'_, AppState>) -> CommandResult<Vec<Category>> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::categories::all(&connection).map_err(to_string)
 }
 
@@ -43,7 +49,10 @@ pub fn create_category(
     color: String,
     icon: Option<String>,
 ) -> CommandResult<Category> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::categories::create(&connection, &name, &color, icon).map_err(to_string)
 }
 
@@ -55,21 +64,38 @@ pub fn update_category(
     color: String,
     icon: Option<String>,
 ) -> CommandResult<Category> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::categories::update(&connection, &id, &name, &color, icon).map_err(to_string)
 }
 
 #[tauri::command]
-pub fn delete_category(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<()> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+pub fn delete_category(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> CommandResult<()> {
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::categories::delete(&connection, &id).map_err(to_string)?;
     emit_changed(&app);
     Ok(())
 }
 
 #[tauri::command]
-pub fn toggle_favorite(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<Clip> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+pub fn toggle_favorite(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> CommandResult<Clip> {
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     let clip = database::clips::toggle_favorite(&connection, &id).map_err(to_string)?;
     emit_changed(&app);
     Ok(clip)
@@ -77,7 +103,10 @@ pub fn toggle_favorite(app: AppHandle, state: State<'_, AppState>, id: String) -
 
 #[tauri::command]
 pub fn delete_clip(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<()> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::clips::delete_clip(&connection, &id).map_err(to_string)?;
     emit_changed(&app);
     Ok(())
@@ -85,7 +114,10 @@ pub fn delete_clip(app: AppHandle, state: State<'_, AppState>, id: String) -> Co
 
 #[tauri::command]
 pub fn clear_history(app: AppHandle, state: State<'_, AppState>) -> CommandResult<()> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::clips::clear_history(&connection).map_err(to_string)?;
     emit_changed(&app);
     Ok(())
@@ -94,15 +126,22 @@ pub fn clear_history(app: AppHandle, state: State<'_, AppState>) -> CommandResul
 #[tauri::command]
 pub fn copy_clip(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<()> {
     let content = {
-        let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+        let connection = state
+            .db
+            .lock()
+            .map_err(|_| "Database lock failed".to_string())?;
         let clip = database::clips::get_clip(&connection, &id)
             .map_err(to_string)?
             .ok_or_else(|| "Clip not found".to_string())?;
-        let updated = database::clips::upsert_clip(&connection, &clip.content, None).map_err(to_string)?;
+        let updated =
+            database::clips::upsert_clip(&connection, &clip.content, None).map_err(to_string)?;
         if let Ok(limit) = database::settings::get_limit(&connection) {
             let _ = database::clips::prune(&connection, limit);
         }
-        let mut suppress = state.suppress_hash.lock().map_err(|_| "Clipboard guard failed".to_string())?;
+        let mut suppress = state
+            .suppress_hash
+            .lock()
+            .map_err(|_| "Clipboard guard failed".to_string())?;
         *suppress = Some((updated.content_hash, Instant::now()));
         clip.content
     };
@@ -156,26 +195,42 @@ pub fn move_clip_to_category(
     id: String,
     category_id: Option<String>,
 ) -> CommandResult<Clip> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
-    let clip = database::clips::move_to_category(&connection, &id, category_id).map_err(to_string)?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
+    let clip =
+        database::clips::move_to_category(&connection, &id, category_id).map_err(to_string)?;
     emit_changed(&app);
     Ok(clip)
 }
 
 #[tauri::command]
 pub fn get_settings(state: State<'_, AppState>) -> CommandResult<AppSettings> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::settings::get(&connection).map_err(to_string)
 }
 
 #[tauri::command]
-pub fn update_settings(app: AppHandle, state: State<'_, AppState>, settings: AppSettings) -> CommandResult<AppSettings> {
+pub fn update_settings(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    settings: AppSettings,
+) -> CommandResult<AppSettings> {
     {
-        let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+        let connection = state
+            .db
+            .lock()
+            .map_err(|_| "Database lock failed".to_string())?;
         database::settings::save(&connection, &settings).map_err(to_string)?;
         database::clips::prune(&connection, settings.max_stored_clips).map_err(to_string)?;
     }
-    state.tracking_paused.store(settings.tracking_paused, Ordering::Relaxed);
+    state
+        .tracking_paused
+        .store(settings.tracking_paused, Ordering::Relaxed);
     let autostart = app.autolaunch();
     if settings.launch_at_startup {
         autostart.enable().map_err(to_string)?;
@@ -187,8 +242,15 @@ pub fn update_settings(app: AppHandle, state: State<'_, AppState>, settings: App
 }
 
 #[tauri::command]
-pub fn set_tracking_paused(app: AppHandle, state: State<'_, AppState>, paused: bool) -> CommandResult<bool> {
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+pub fn set_tracking_paused(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    paused: bool,
+) -> CommandResult<bool> {
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     database::settings::set_tracking_paused(&connection, paused).map_err(to_string)?;
     state.tracking_paused.store(paused, Ordering::Relaxed);
     emit_changed(&app);
@@ -228,7 +290,10 @@ pub fn seed_dev_data(app: AppHandle, state: State<'_, AppState>) -> CommandResul
         r#"{"name":"ClipArk","localFirst":true}"#,
         "const user = await findUser(id);\nreturn user.email;",
     ];
-    let connection = state.db.lock().map_err(|_| "Database lock failed".to_string())?;
+    let connection = state
+        .db
+        .lock()
+        .map_err(|_| "Database lock failed".to_string())?;
     for sample in samples {
         database::clips::upsert_clip(&connection, sample, None).map_err(to_string)?;
     }

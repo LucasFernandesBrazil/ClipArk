@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { Braces, Code2, Link2, Mail, Palette, Star, Trash2, Type } from "lucide-react";
-import { forwardRef, useEffect, useState } from "react";
+import { Braces, Check, Code2, Link2, Mail, Palette, Star, Trash2, Type } from "lucide-react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { hostname, previewText, relativeTime, typeLabel } from "../lib/format";
 import type { Category, Clip, ClipType } from "../types";
 
@@ -23,6 +23,8 @@ export const ClipCard = forwardRef<HTMLElement, ClipCardProps>(function ClipCard
 ) {
   const Icon = typeIcon(clip.type);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
 
   useEffect(() => {
     if (!menu) return;
@@ -34,6 +36,26 @@ export const ClipCard = forwardRef<HTMLElement, ClipCardProps>(function ClipCard
       window.removeEventListener("keydown", close);
     };
   }, [menu]);
+
+  useLayoutEffect(() => {
+    if (!menu) {
+      setMenuPosition(null);
+      return;
+    }
+    const element = menuRef.current;
+    if (!element) return;
+    const { width, height } = element.getBoundingClientRect();
+    const margin = 8;
+    setMenuPosition({
+      left: Math.max(margin, Math.min(menu.x, window.innerWidth - width - margin)),
+      top: Math.max(margin, Math.min(menu.y, window.innerHeight - height - margin)),
+    });
+  }, [menu]);
+
+  function runFromMenu(action: () => void) {
+    setMenu(null);
+    action();
+  }
 
   return (
     <article
@@ -105,35 +127,41 @@ export const ClipCard = forwardRef<HTMLElement, ClipCardProps>(function ClipCard
 
       {menu ? (
         <div
+          ref={menuRef}
           className="fixed z-50 w-52 rounded-card border border-ark-hairline bg-ark-surface p-1.5 shadow-launcher backdrop-blur-xl"
-          style={{ left: menu.x, top: menu.y }}
+          style={{
+            left: menuPosition?.left ?? menu.x,
+            top: menuPosition?.top ?? menu.y,
+            visibility: menuPosition ? "visible" : "hidden",
+          }}
           role="menu"
+          onMouseDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
         >
-          <ContextButton onClick={onPaste}>Paste</ContextButton>
-          <ContextButton onClick={onFavorite}>{clip.favorite ? "Unfavorite" : "Favorite"}</ContextButton>
+          <ContextButton onClick={() => runFromMenu(onPaste)}>Paste</ContextButton>
+          <ContextButton onClick={() => runFromMenu(onFavorite)}>
+            {clip.favorite ? "Unfavorite" : "Favorite"}
+          </ContextButton>
           <div className="my-1 border-t border-ark-hairline" />
-          <label className="block px-2 pb-1 text-caption text-ark-textFaint" htmlFor={`context-category-${clip.id}`}>
-            Move to category
-          </label>
-          <select
-            id={`context-category-${clip.id}`}
-            value={clip.categoryId ?? ""}
-            onChange={(event) => {
-              onMove(event.currentTarget.value || null);
-              setMenu(null);
-            }}
-            className="mb-1 h-7 w-full rounded-chip border-ark-hairline bg-ark-raised px-2 py-0 text-body text-ark-text focus:border-ark-accent focus:ring-1 focus:ring-ark-accent"
-          >
-            <option value="">No category</option>
+          <p className="px-2 pb-1 text-caption text-ark-textFaint">Move to category</p>
+          <div className="clip-scrollbar max-h-28 overflow-y-auto">
+            <CategoryOption
+              label="No category"
+              checked={!clip.categoryId}
+              onClick={() => runFromMenu(() => onMove(null))}
+            />
             {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
+              <CategoryOption
+                key={category.id}
+                label={category.name}
+                color={category.color}
+                checked={clip.categoryId === category.id}
+                onClick={() => runFromMenu(() => onMove(category.id))}
+              />
             ))}
-          </select>
+          </div>
           <div className="my-1 border-t border-ark-hairline" />
-          <ContextButton danger onClick={onDelete}>
+          <ContextButton danger onClick={() => runFromMenu(onDelete)}>
             Delete
           </ContextButton>
         </div>
@@ -184,6 +212,36 @@ function ContextButton({ children, danger, onClick }: { children: React.ReactNod
       )}
     >
       {children}
+    </button>
+  );
+}
+
+function CategoryOption({
+  label,
+  color,
+  checked,
+  onClick,
+}: {
+  label: string;
+  color?: string;
+  checked: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={checked}
+      onClick={onClick}
+      className="flex w-full items-center gap-1.5 rounded-chip px-2 py-1 text-left text-body text-ark-text transition-colors hover:bg-ark-raisedHover"
+    >
+      <span
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: color ?? "rgba(245, 245, 247, 0.28)" }}
+        aria-hidden
+      />
+      <span className="truncate">{label}</span>
+      {checked ? <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-ark-accent" aria-hidden /> : null}
     </button>
   );
 }

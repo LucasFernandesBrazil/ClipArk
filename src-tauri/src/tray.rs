@@ -7,12 +7,21 @@ use tauri::{
 pub fn setup(app: &mut App) -> Result<(), tauri::Error> {
     let open = MenuItem::with_id(app, "open", "Open ClipArk", true, None::<&str>)?;
     let pause = MenuItem::with_id(app, "pause", "Pause Clipboard Tracking", true, None::<&str>)?;
-    let resume = MenuItem::with_id(app, "resume", "Resume Clipboard Tracking", true, None::<&str>)?;
+    let resume = MenuItem::with_id(
+        app,
+        "resume",
+        "Resume Clipboard Tracking",
+        true,
+        None::<&str>,
+    )?;
     let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let sep1 = PredefinedMenuItem::separator(app)?;
     let sep2 = PredefinedMenuItem::separator(app)?;
-    let menu = Menu::with_items(app, &[&open, &sep1, &pause, &resume, &settings, &sep2, &quit])?;
+    let menu = Menu::with_items(
+        app,
+        &[&open, &sep1, &pause, &resume, &settings, &sep2, &quit],
+    )?;
 
     let mut builder = TrayIconBuilder::with_id("clipark-tray")
         .tooltip("ClipArk")

@@ -12,19 +12,43 @@ pub fn get(connection: &Connection) -> Result<AppSettings> {
 }
 
 pub fn save(connection: &Connection, settings: &AppSettings) -> Result<()> {
-    set_value(connection, "launch_at_startup", if settings.launch_at_startup { "true" } else { "false" })?;
+    set_value(
+        connection,
+        "launch_at_startup",
+        if settings.launch_at_startup {
+            "true"
+        } else {
+            "false"
+        },
+    )?;
     let max_value = settings
         .max_stored_clips
         .map(|value| value.to_string())
         .unwrap_or_else(|| "unlimited".to_string());
     set_value(connection, "max_stored_clips", &max_value)?;
-    set_value(connection, "tracking_paused", if settings.tracking_paused { "true" } else { "false" })?;
-    set_value(connection, "auto_paste", if settings.auto_paste { "true" } else { "false" })?;
+    set_value(
+        connection,
+        "tracking_paused",
+        if settings.tracking_paused {
+            "true"
+        } else {
+            "false"
+        },
+    )?;
+    set_value(
+        connection,
+        "auto_paste",
+        if settings.auto_paste { "true" } else { "false" },
+    )?;
     Ok(())
 }
 
 pub fn set_tracking_paused(connection: &Connection, paused: bool) -> Result<()> {
-    set_value(connection, "tracking_paused", if paused { "true" } else { "false" })
+    set_value(
+        connection,
+        "tracking_paused",
+        if paused { "true" } else { "false" },
+    )
 }
 
 pub fn get_tracking_paused(connection: &Connection) -> Result<bool> {
@@ -33,7 +57,11 @@ pub fn get_tracking_paused(connection: &Connection) -> Result<bool> {
 
 pub fn get_limit(connection: &Connection) -> Result<Option<i64>> {
     let value: String = connection
-        .query_row("SELECT value FROM settings WHERE key = 'max_stored_clips'", [], |row| row.get(0))
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'max_stored_clips'",
+            [],
+            |row| row.get(0),
+        )
         .unwrap_or_else(|_| "5000".into());
     if value == "unlimited" {
         Ok(None)
@@ -44,8 +72,18 @@ pub fn get_limit(connection: &Connection) -> Result<Option<i64>> {
 
 fn get_bool(connection: &Connection, key: &str, default: bool) -> Result<bool> {
     let value: String = connection
-        .query_row("SELECT value FROM settings WHERE key = ?1", params![key], |row| row.get(0))
-        .unwrap_or_else(|_| if default { "true".into() } else { "false".into() });
+        .query_row(
+            "SELECT value FROM settings WHERE key = ?1",
+            params![key],
+            |row| row.get(0),
+        )
+        .unwrap_or_else(|_| {
+            if default {
+                "true".into()
+            } else {
+                "false".into()
+            }
+        });
     Ok(value == "true")
 }
 

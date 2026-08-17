@@ -11,6 +11,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { Toast } from "./components/Toast";
 import { useDebouncedEffect } from "./hooks/useDebouncedEffect";
 import { useLauncherKeys } from "./hooks/useLauncherKeys";
+import { previewText } from "./lib/format";
 import {
   ACCESSIBILITY_DENIED,
   clearHistory,
@@ -33,6 +34,13 @@ type Chip = {
   count?: number;
   color?: string;
   apply: () => void;
+};
+
+type Confirmation = {
+  title: string;
+  body: string;
+  confirmLabel: string;
+  run: () => Promise<void>;
 };
 
 export default function App() {
@@ -61,11 +69,11 @@ export default function App() {
   const searchRef = useRef<HTMLInputElement>(null);
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const [toast, setToast] = useState<string | null>(null);
-  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [categoryDialog, setCategoryDialog] = useState<{ mode: "create" | "edit"; category?: Category } | null>(null);
 
   const showingSettings = filter === "settings";
-  const modalOpen = categoryDialog !== null || clearDialogOpen;
+  const modalOpen = categoryDialog !== null || confirmation !== null;
   const autoPaste = settings?.autoPaste ?? true;
   const selectedIndex = useMemo(() => clips.findIndex((clip) => clip.id === selectedId), [clips, selectedId]);
 
@@ -92,6 +100,10 @@ export default function App() {
     }).then((cleanup) => cleanups.push(cleanup));
     return () => cleanups.forEach((cleanup) => cleanup());
   }, [refreshClips, setFilter, setQuery]);
+
+  useEffect(() => {
+    if (!modalOpen) searchRef.current?.focus();
+  }, [modalOpen]);
 
   useEffect(() => {
     if (!toast) return;
@@ -137,10 +149,28 @@ export default function App() {
     await refreshClips();
   }, [refreshClips]);
 
-  const handleDelete = useCallback(async (id: string) => {
-    await deleteClip(id);
-    await refreshClips();
+  const handleDelete = useCallback((id: string) => {
+    const clip = useClipStore.getState().clips.find((candidate) => candidate.id === id);
+    setConfirmation({
+      title: "Delete this clip?",
+      body: clip
+        ? `“${previewText(clip.content, 90)}” will be removed from this Mac.`
+        : "This clip will be removed from this Mac.",
+      confirmLabel: "Delete clip",
+      run: async () => {
+        await deleteClip(id);
+        setToast("Clip deleted");
+        await refreshClips();
+      },
+    });
   }, [refreshClips]);
+
+  async function runConfirmation() {
+    if (!confirmation) return;
+    const { run } = confirmation;
+    setConfirmation(null);
+    await run();
+  }
 
   async function handleMove(id: string, categoryId: string | null) {
     await moveClipToCategory(id, categoryId);
@@ -155,11 +185,30 @@ export default function App() {
     setToast("Category updated");
   }
 
-  async function handleClearHistory() {
-    await clearHistory();
-    setClearDialogOpen(false);
-    setToast("Clipboard history cleared");
-    await refreshClips();
+  function confirmClearHistory() {
+    setConfirmation({
+      title: "Clear clipboard history?",
+      body: "This removes every saved clip from this Mac. Categories and settings stay in place.",
+      confirmLabel: "Clear history",
+      run: async () => {
+        await clearHistory();
+        setToast("Clipboard history cleared");
+        await refreshClips();
+      },
+    });
+  }
+
+  function confirmDeleteCategory(category: Category) {
+    setConfirmation({
+      title: `Delete “${category.name}”?`,
+      body: "The category is removed. Clips filed under it stay in your history without a category.",
+      confirmLabel: "Delete category",
+      run: async () => {
+        await deleteCategory(category.id);
+        setCategoryDialog(null);
+        setToast("Category deleted");
+      },
+    });
   }
 
   /** Chip order doubles as the Tab cycle order. */
@@ -186,8 +235,8 @@ export default function App() {
   useLauncherKeys({
     modalOpen,
     onCloseModal: () => {
-      setCategoryDialog(null);
-      setClearDialogOpen(false);
+      if (confirmation) setConfirmation(null);
+      else setCategoryDialog(null);
     },
     selectedIndex: showingSettings ? -1 : selectedIndex,
     count: showingSettings ? 0 : clips.length,
@@ -207,7 +256,9 @@ export default function App() {
     onPasteSelected: () => selectedId && void handlePaste(selectedId),
     onCopySelected: () => selectedId && void handleCopy(selectedId),
     onFavoriteSelected: () => selectedId && void handleFavorite(selectedId),
-    onDeleteSelected: () => selectedId && void handleDelete(selectedId),
+    onDeleteSelected: () => {
+      if (selectedId) handleDelete(selectedId);
+    },
     onCycleFilter: (direction) => {
       const next = (activeChipIndex + direction + chips.length) % chips.length;
       chips[next]?.apply();
@@ -296,7 +347,7 @@ export default function App() {
             categories={categories}
             onSave={saveSettings}
             onTrackingPaused={setTrackingPaused}
-            onClearHistory={() => setClearDialogOpen(true)}
+            onClearHistory={confirmClearHistory}
             onEditCategory={(category) => setCategoryDialog({ mode: "edit", category })}
             onCreateCategory={() => setCategoryDialog({ mode: "create" })}
             onSeed={async () => {
@@ -329,7 +380,7 @@ export default function App() {
                 onSelect={() => setSelectedId(clip.id)}
                 onPaste={() => void handlePaste(clip.id)}
                 onFavorite={() => void handleFavorite(clip.id)}
-                onDelete={() => void handleDelete(clip.id)}
+                onDelete={() => handleDelete(clip.id)}
                 onMove={(categoryId) => void handleMove(clip.id, categoryId)}
               />
             ))}
@@ -350,13 +401,7 @@ export default function App() {
           category={categoryDialog.category}
           onCancel={() => setCategoryDialog(null)}
           onDelete={
-            categoryDialog.category
-              ? async () => {
-                  await deleteCategory(categoryDialog.category!.id);
-                  setToast("Category deleted");
-                  setCategoryDialog(null);
-                }
-              : undefined
+            categoryDialog.category ? () => confirmDeleteCategory(categoryDialog.category!) : undefined
           }
           onSubmit={async (name, color) => {
             if (categoryDialog.mode === "edit" && categoryDialog.category) {
@@ -370,13 +415,13 @@ export default function App() {
         />
       ) : null}
 
-      {clearDialogOpen ? (
+      {confirmation ? (
         <ConfirmDialog
-          title="Clear clipboard history?"
-          body="This removes every saved clip from this Mac. Categories and settings stay in place."
-          confirmLabel="Clear history"
-          onCancel={() => setClearDialogOpen(false)}
-          onConfirm={() => void handleClearHistory()}
+          title={confirmation.title}
+          body={confirmation.body}
+          confirmLabel={confirmation.confirmLabel}
+          onCancel={() => setConfirmation(null)}
+          onConfirm={() => void runConfirmation()}
         />
       ) : null}
 

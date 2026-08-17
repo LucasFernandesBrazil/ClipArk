@@ -43,7 +43,11 @@ pub fn detect_type(content: &str) -> String {
     "text".into()
 }
 
-pub fn upsert_clip(connection: &Connection, content: &str, source_app: Option<&str>) -> Result<Clip> {
+pub fn upsert_clip(
+    connection: &Connection,
+    content: &str,
+    source_app: Option<&str>,
+) -> Result<Clip> {
     let normalized = normalize_content(content);
     let hash = content_hash(&normalized);
     let clip_type = detect_type(content);
@@ -124,7 +128,10 @@ pub fn get_clip_by_hash(connection: &Connection, hash: &str) -> Result<Option<Cl
 }
 
 pub fn toggle_favorite(connection: &Connection, id: &str) -> Result<Clip> {
-    connection.execute("UPDATE clips SET favorite = CASE favorite WHEN 1 THEN 0 ELSE 1 END WHERE id = ?1", params![id])?;
+    connection.execute(
+        "UPDATE clips SET favorite = CASE favorite WHEN 1 THEN 0 ELSE 1 END WHERE id = ?1",
+        params![id],
+    )?;
     get_clip(connection, id)?.ok_or(rusqlite::Error::QueryReturnedNoRows)
 }
 
@@ -138,8 +145,15 @@ pub fn clear_history(connection: &Connection) -> Result<()> {
     Ok(())
 }
 
-pub fn move_to_category(connection: &Connection, id: &str, category_id: Option<String>) -> Result<Clip> {
-    connection.execute("UPDATE clips SET category_id = ?1 WHERE id = ?2", params![category_id, id])?;
+pub fn move_to_category(
+    connection: &Connection,
+    id: &str,
+    category_id: Option<String>,
+) -> Result<Clip> {
+    connection.execute(
+        "UPDATE clips SET category_id = ?1 WHERE id = ?2",
+        params![category_id, id],
+    )?;
     get_clip(connection, id)?.ok_or(rusqlite::Error::QueryReturnedNoRows)
 }
 
@@ -193,7 +207,11 @@ fn is_email(value: &str) -> bool {
     let mut parts = value.split('@');
     let local = parts.next().unwrap_or_default();
     let domain = parts.next().unwrap_or_default();
-    parts.next().is_none() && !local.is_empty() && domain.contains('.') && !domain.starts_with('.') && !domain.ends_with('.')
+    parts.next().is_none()
+        && !local.is_empty()
+        && domain.contains('.')
+        && !domain.starts_with('.')
+        && !domain.ends_with('.')
 }
 
 fn looks_like_code(value: &str) -> bool {
@@ -222,6 +240,7 @@ fn looks_like_code(value: &str) -> bool {
         "<?php",
         "</",
     ];
-    let structural = value.contains('{') && value.contains('}') && (value.contains(';') || value.contains("=>"));
+    let structural =
+        value.contains('{') && value.contains('}') && (value.contains(';') || value.contains("=>"));
     structural || code_tokens.iter().any(|token| lower.contains(token))
 }
