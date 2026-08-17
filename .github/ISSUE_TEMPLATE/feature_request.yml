@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest something ClipArk should do
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before writing this up, a quick check: **ClipArk stays local-first.** No networked
+        services, no accounts, no sync, no analytics. Ideas that need any of those aren't
+        a fit, however good they are on their own.
+
+        The [roadmap](../blob/main/README.md#-roadmap) lists what's already planned.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: Describe the situation you're in, not the solution you have in mind.
+      placeholder: "When I copy a password from 1Password, it ends up in my history and …"
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like ClipArk to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything you've tried or considered?
+      description: Workarounds, other apps that get this right, approaches you rejected.
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Fit
+      options:
+        - label: This works entirely offline, with no account and no server
+          required: true
+        - label: I'd be up for implementing it

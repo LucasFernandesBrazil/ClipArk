@@ -1,0 +1,92 @@
+name: Bug report
+description: Something in ClipArk doesn't work the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report.
+
+        ⚠️ **Please don't paste real clipboard contents here.** Whatever you were copying
+        is, by definition, your own data — redact it or replace it with an equivalent
+        example.
+
+        Security vulnerabilities go through [SECURITY.md](../blob/main/SECURITY.md)
+        instead of this tracker.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Copy something from …
+        2. Press ⌘⇧V
+        3. …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of ClipArk?
+      options:
+        - Clipboard capture (clips not appearing, duplicates, wrong type)
+        - Launcher window (placement, vibrancy, showing/hiding)
+        - Auto-paste (⏎ doesn't paste, pastes into the wrong app)
+        - Search, favourites or categories
+        - Menu bar / tray
+        - Settings
+        - Build or install
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "15.2 (Sequoia)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: chip
+    attributes:
+      label: Mac
+      options:
+        - Apple silicon
+        - Intel
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: ClipArk version or commit
+      description: There are no releases yet, so the commit SHA you built from is ideal.
+      placeholder: "main @ bbf075f"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: accessibility
+    attributes:
+      label: If this is about auto-paste
+      options:
+        - label: ClipArk is listed and enabled under System Settings → Privacy & Security → Accessibility
+        - label: "*Paste into the previous app on ⏎* is on in Settings"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output
+      description: From `npm run tauri dev`, if you have it. Rendered as a code block automatically.
+      render: shell
