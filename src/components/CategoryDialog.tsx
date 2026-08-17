@@ -7,7 +7,7 @@ type CategoryDialogProps = {
   mode: "create" | "edit";
   category?: Category;
   onSubmit: (name: string, color: string) => Promise<void>;
-  onDelete?: () => Promise<void>;
+  onDelete?: () => void;
   onCancel: () => void;
 };
 
@@ -61,7 +61,7 @@ export function CategoryDialog({ mode, category, onSubmit, onDelete, onCancel }:
           {onDelete ? (
             <button
               type="button"
-              onClick={() => void onDelete()}
+              onClick={onDelete}
               className="rounded-chip px-2.5 py-1.5 text-body font-medium text-ark-danger transition-colors hover:bg-ark-dangerSoft"
             >
               Delete
@@ -108,6 +108,7 @@ export function ConfirmDialog({ title, body, confirmLabel, onCancel, onConfirm }
           <button
             type="button"
             onClick={onCancel}
+            autoFocus
             className="rounded-chip px-3 py-1.5 text-body font-medium text-ark-textMuted transition-colors hover:bg-ark-raisedHover hover:text-ark-text"
           >
             Cancel
