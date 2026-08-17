@@ -10,22 +10,23 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "ClipArk",
         "width": 1180,
-        "height": 420,
-        "minWidth": 760,
-        "minHeight": 340,
+        "height": 320,
+        "minWidth": 720,
+        "minHeight": 280,
         "center": true,
-        "resizable": true,
+        "resizable": false,
         "decorations": false,
         "alwaysOnTop": true,
         "visibleOnAllWorkspaces": true,
         "skipTaskbar": true,
-        "transparent": false,
-        "shadow": true,
-        "visible": true
+        "transparent": true,
+        "shadow": false,
+        "visible": false
       }
     ],
     "security": {

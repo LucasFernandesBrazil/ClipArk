@@ -29,6 +29,7 @@ export type AppSettings = {
   launchAtStartup: boolean;
   maxStoredClips: number | null;
   trackingPaused: boolean;
+  autoPaste: boolean;
 };
 
 export type ClipFilter = "all" | "favorites" | "settings";

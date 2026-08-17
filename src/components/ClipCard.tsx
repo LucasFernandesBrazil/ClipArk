@@ -1,21 +1,26 @@
 import clsx from "clsx";
-import { Braces, Code2, Copy, Eye, Heart, Link2, Mail, Palette, Type, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { hostname, previewText, relativeTime } from "../lib/format";
+import { Braces, Code2, Link2, Mail, Palette, Star, Trash2, Type } from "lucide-react";
+import { forwardRef, useEffect, useState } from "react";
+import { hostname, previewText, relativeTime, typeLabel } from "../lib/format";
 import type { Category, Clip, ClipType } from "../types";
 
 type ClipCardProps = {
   clip: Clip;
   categories: Category[];
   selected: boolean;
+  /** 1-9 renders a ⌘N badge; anything else renders none. */
+  index: number;
   onSelect: () => void;
-  onCopy: () => void;
+  onPaste: () => void;
   onFavorite: () => void;
   onDelete: () => void;
   onMove: (categoryId: string | null) => void;
 };
 
-export function ClipCard({ clip, categories, selected, onSelect, onCopy, onFavorite, onDelete, onMove }: ClipCardProps) {
+export const ClipCard = forwardRef<HTMLElement, ClipCardProps>(function ClipCard(
+  { clip, categories, selected, index, onSelect, onPaste, onFavorite, onDelete, onMove },
+  ref,
+) {
   const Icon = typeIcon(clip.type);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -32,98 +37,83 @@ export function ClipCard({ clip, categories, selected, onSelect, onCopy, onFavor
 
   return (
     <article
-      tabIndex={0}
+      ref={ref}
+      tabIndex={-1}
+      // Clicking a card must not steal focus from the search field — typing has to keep working.
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onSelect}
-      onDoubleClick={onCopy}
-      onFocus={onSelect}
+      onDoubleClick={onPaste}
       onContextMenu={(event) => {
         event.preventDefault();
         onSelect();
         setMenu({ x: event.clientX, y: event.clientY });
       }}
       className={clsx(
-        "clip-card-surface group relative h-full overflow-hidden rounded-[22px] border transition duration-200",
+        "group relative flex h-full w-[228px] shrink-0 snap-start flex-col overflow-hidden rounded-card border p-3 text-left transition-colors",
         selected
-          ? "border-ark-accent bg-ark-panelSoft shadow-[0_0_0_3px_rgba(0,128,255,0.45)]"
-          : "border-white/10 bg-ark-panelSoft hover:border-white/24",
+          ? "border-ark-accent bg-ark-accentSoft"
+          : "border-ark-hairline bg-ark-raised hover:bg-ark-raisedHover",
       )}
-      style={cardStyle(clip)}
+      aria-current={selected ? "true" : undefined}
     >
-      <div className="absolute right-3 top-3 z-20 flex items-center gap-2 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
-        <button className="rounded-full bg-black/45 p-2 text-white/80 backdrop-blur hover:bg-black/62 hover:text-white" onClick={stop(onCopy)} aria-label="Copy clip">
-            <Copy className="h-4 w-4" aria-hidden />
-          </button>
-          <button
-          className={clsx(
-            "rounded-full bg-black/45 p-2 backdrop-blur hover:bg-black/62 hover:text-white",
-            clip.favorite ? "text-white" : "text-white/75",
-          )}
-            onClick={stop(onFavorite)}
-            aria-label={clip.favorite ? "Unfavorite clip" : "Favorite clip"}
-          >
-            <Heart className="h-4 w-4" aria-hidden fill={clip.favorite ? "currentColor" : "none"} />
-          </button>
-        <button className="rounded-full bg-black/45 p-2 text-white/75 backdrop-blur hover:bg-black/62 hover:text-white" onClick={stop(onDelete)} aria-label="Delete clip">
-            <XCircle className="h-4 w-4" aria-hidden />
-          </button>
-      </div>
+      <header className="flex shrink-0 items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: typeColor(clip.type) }} aria-hidden />
+        <span className="text-caption font-medium uppercase tracking-wide" style={{ color: typeColor(clip.type) }}>
+          {typeLabel(clip.type)}
+        </span>
+        {clip.categoryName ? (
+          <span className="flex min-w-0 items-center gap-1 text-caption text-ark-textFaint">
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: clip.categoryColor ?? "#8e8e93" }}
+              aria-hidden
+            />
+            <span className="truncate">{clip.categoryName}</span>
+          </span>
+        ) : null}
 
-      <div className="relative z-10 flex h-full flex-col justify-between p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[11px] bg-white/90 text-black shadow-lg shadow-black/20">
-            <Icon className="h-5 w-5" aria-hidden />
-          </div>
-          {selected ? (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black/42 text-white backdrop-blur">
-              <Eye className="h-5 w-5" aria-hidden />
-            </div>
+        <span className="ml-auto flex shrink-0 items-center gap-1">
+          {clip.favorite ? (
+            <Star className="h-3.5 w-3.5 text-[#ffd60a]" fill="currentColor" aria-label="Favorite" />
           ) : null}
-        </div>
+          {index < 9 ? (
+            <kbd className="rounded bg-ark-raisedActive px-1 py-px font-sans text-caption font-medium text-ark-textFaint group-hover:opacity-0">
+              ⌘{index + 1}
+            </kbd>
+          ) : null}
+        </span>
+      </header>
 
-        <div className="min-w-0">
-          <Preview clip={clip} />
-          <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-white/68">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#54c7ff] text-white shadow">
-              <ClipboardGlyph />
-            </span>
-            <span>{relativeTime(clip.lastCopiedAt)}</span>
-            <span className="ml-auto rounded-full bg-black/38 px-2 py-1 text-xs text-white/72 backdrop-blur">
-              {clip.copiedCount > 1 ? `x${clip.copiedCount}` : shortcutLabel(clip.type)}
-            </span>
-          </div>
-        </div>
+      <div className="mt-2 min-h-0 flex-1 overflow-hidden">
+        <Preview clip={clip} />
       </div>
 
-      <div className="absolute left-3 top-[54px] z-20 hidden w-[calc(100%-1.5rem)] border-t border-white/12 pt-3 group-focus-within:block group-hover:block">
-        <label className="sr-only" htmlFor={`category-${clip.id}`}>
-          Move clip to category
-        </label>
-        <select
-          id={`category-${clip.id}`}
-          value={clip.categoryId ?? ""}
-          onChange={(event) => onMove(event.currentTarget.value || null)}
-          className="h-8 max-w-[150px] rounded-full border-white/15 bg-black/42 text-xs text-white shadow-none backdrop-blur focus:border-ark-accent focus:ring-ark-accent"
-        >
-          <option value="">No category</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+      <footer className="mt-2 flex shrink-0 items-center gap-2 text-caption text-ark-textFaint">
+        <span className="truncate">{relativeTime(clip.lastCopiedAt)}</span>
+        {clip.copiedCount > 1 ? <span className="tabular-nums">·  used {clip.copiedCount}×</span> : null}
+      </footer>
+
+      {/* Hover actions. Paste is the click/Enter action, so it is not repeated here. */}
+      <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <HoverAction label={clip.favorite ? "Unfavorite" : "Favorite"} onClick={onFavorite}>
+          <Star className="h-3.5 w-3.5" fill={clip.favorite ? "currentColor" : "none"} aria-hidden />
+        </HoverAction>
+        <HoverAction label="Delete" danger onClick={onDelete}>
+          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+        </HoverAction>
       </div>
 
       {menu ? (
         <div
-          className="fixed z-40 w-56 rounded-[18px] border border-white/10 bg-black p-2 shadow-launcher"
+          className="fixed z-50 w-52 rounded-card border border-ark-hairline bg-ark-surface p-1.5 shadow-launcher backdrop-blur-xl"
           style={{ left: menu.x, top: menu.y }}
           role="menu"
           onClick={(event) => event.stopPropagation()}
         >
-          <ContextButton onClick={onCopy}>Copy</ContextButton>
+          <ContextButton onClick={onPaste}>Paste</ContextButton>
           <ContextButton onClick={onFavorite}>{clip.favorite ? "Unfavorite" : "Favorite"}</ContextButton>
-          <div className="my-1 border-t border-ark-border" />
-          <label className="block px-2 py-1 text-xs text-ark-muted" htmlFor={`context-category-${clip.id}`}>
+          <div className="my-1 border-t border-ark-hairline" />
+          <label className="block px-2 pb-1 text-caption text-ark-textFaint" htmlFor={`context-category-${clip.id}`}>
             Move to category
           </label>
           <select
@@ -133,7 +123,7 @@ export function ClipCard({ clip, categories, selected, onSelect, onCopy, onFavor
               onMove(event.currentTarget.value || null);
               setMenu(null);
             }}
-            className="mb-1 w-full rounded border-ark-border bg-ark-panelSoft text-xs text-ark-text shadow-none focus:border-ark-accent focus:ring-ark-accent"
+            className="mb-1 h-7 w-full rounded-chip border-ark-hairline bg-ark-raised px-2 py-0 text-body text-ark-text focus:border-ark-accent focus:ring-1 focus:ring-ark-accent"
           >
             <option value="">No category</option>
             {categories.map((category) => (
@@ -142,13 +132,43 @@ export function ClipCard({ clip, categories, selected, onSelect, onCopy, onFavor
               </option>
             ))}
           </select>
-          <div className="my-1 border-t border-ark-border" />
+          <div className="my-1 border-t border-ark-hairline" />
           <ContextButton danger onClick={onDelete}>
             Delete
           </ContextButton>
         </div>
       ) : null}
     </article>
+  );
+});
+
+function HoverAction({
+  label,
+  danger,
+  onClick,
+  children,
+}: {
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      className={clsx(
+        "flex h-6 w-6 items-center justify-center rounded-chip bg-black/45 backdrop-blur transition-colors",
+        danger ? "text-ark-textMuted hover:bg-ark-danger hover:text-white" : "text-ark-textMuted hover:text-ark-text",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -159,8 +179,8 @@ function ContextButton({ children, danger, onClick }: { children: React.ReactNod
       role="menuitem"
       onClick={onClick}
       className={clsx(
-        "flex w-full rounded px-2 py-1.5 text-left text-sm transition hover:bg-white/5",
-        danger ? "text-ark-danger" : "text-ark-text",
+        "flex w-full rounded-chip px-2 py-1 text-left text-body transition-colors",
+        danger ? "text-ark-danger hover:bg-ark-dangerSoft" : "text-ark-text hover:bg-ark-raisedHover",
       )}
     >
       {children}
@@ -170,9 +190,15 @@ function ContextButton({ children, danger, onClick }: { children: React.ReactNod
 
 function Preview({ clip }: { clip: Clip }) {
   if (clip.type === "color") {
+    const color = clip.content.trim();
     return (
-      <div className="pt-6 font-mono text-2xl font-bold text-white drop-shadow">
-        <span>{clip.content.trim()}</span>
+      <div className="flex items-center gap-2">
+        <span
+          className="h-8 w-8 shrink-0 rounded-chip border border-ark-hairline"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        />
+        <span className="truncate font-mono text-body text-ark-text">{color}</span>
       </div>
     );
   }
@@ -180,72 +206,40 @@ function Preview({ clip }: { clip: Clip }) {
   if (clip.type === "url") {
     return (
       <div className="min-w-0">
-        <div className="truncate text-lg font-bold text-white drop-shadow">{hostname(clip.content)}</div>
-        <div className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-white/72">{clip.content}</div>
+        <p className="truncate text-title font-medium text-ark-text">{hostname(clip.content)}</p>
+        <p className="mt-0.5 line-clamp-3 break-words text-body text-ark-textMuted">{clip.content}</p>
       </div>
     );
   }
 
   const mono = clip.type === "json" || clip.type === "code";
+  if (mono) {
+    return (
+      <pre className="line-clamp-[9] whitespace-pre-wrap break-words font-mono text-caption leading-[15px] text-ark-textMuted">
+        {clip.content.slice(0, 480)}
+      </pre>
+    );
+  }
+
   return (
-    <p className={clsx("line-clamp-3 whitespace-pre-wrap break-words text-lg font-bold leading-6 text-white drop-shadow", mono && "font-mono text-base leading-6")}>
-      {mono ? clip.content.slice(0, 260) : previewText(clip.content, 150)}
-    </p>
+    <p className="line-clamp-[7] break-words text-body text-ark-text">{previewText(clip.content, 400)}</p>
   );
 }
 
-function cardStyle(clip: Clip): React.CSSProperties {
-  if (clip.type === "color") {
-    const color = clip.content.trim();
-    return {
-      background: `linear-gradient(180deg, ${color} 0%, ${color} 48%, rgba(0,0,0,0.74) 100%)`,
-    };
-  }
-
-  if (clip.type === "url") {
-    return {
-      background:
-        "linear-gradient(135deg, rgba(236,242,244,0.96) 0%, rgba(255,255,255,0.9) 44%, rgba(0,0,0,0.7) 100%)",
-    };
-  }
-
-  if (clip.type === "code" || clip.type === "json") {
-    return {
-      background: "linear-gradient(180deg, #2a28ab 0%, #202194 48%, #06051a 100%)",
-    };
-  }
-
-  if (clip.type === "email") {
-    return {
-      background: "linear-gradient(135deg, #0080ff 0%, #0b74d9 48%, #042a58 100%)",
-    };
-  }
-
-  return {
-    background:
-      "radial-gradient(circle at 78% 20%, rgba(255,255,255,0.34), transparent 24%), linear-gradient(145deg, #272727 0%, #191919 48%, #050505 100%)",
-  };
-}
-
-function shortcutLabel(type: ClipType) {
+function typeColor(type: ClipType) {
   switch (type) {
-    case "color":
-      return "^#";
     case "url":
-      return "^U";
+      return "#64d2ff";
     case "email":
-      return "^@";
-    case "code":
-      return "^C";
+      return "#5e5ce6";
+    case "color":
+      return "#ff9f0a";
     case "json":
-      return "^{ }";
+    case "code":
+      return "#30d158";
     default:
-      return "^V";
+      return "rgba(245, 245, 247, 0.38)";
   }
-}
-
-function ClipboardGlyph() {
-  return <Copy className="h-3.5 w-3.5" aria-hidden />;
 }
 
 function typeIcon(type: ClipType) {
@@ -263,11 +257,4 @@ function typeIcon(type: ClipType) {
     default:
       return Type;
   }
-}
-
-function stop(action: () => void) {
-  return (event: React.MouseEvent) => {
-    event.stopPropagation();
-    action();
-  };
 }

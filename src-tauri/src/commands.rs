@@ -112,6 +112,43 @@ pub fn copy_clip(app: AppHandle, state: State<'_, AppState>, id: String) -> Comm
     Ok(())
 }
 
+/// Copies the clip and pastes it straight into whatever app was frontmost.
+/// Hides the launcher first so macOS reactivates that app before the keystroke lands.
+#[tauri::command]
+pub fn paste_clip(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<()> {
+    if !crate::paste::accessibility_granted() {
+        return Err(crate::paste::ACCESSIBILITY_DENIED.to_string());
+    }
+
+    copy_clip(app.clone(), state, id)?;
+
+    if let Some(window) = app.get_webview_window("main") {
+        // The blur handler would race with us hiding the window ourselves.
+        state_suppress_blur(&app, true);
+        window.hide().map_err(to_string)?;
+    }
+
+    let result = crate::paste::paste_to_frontmost();
+    state_suppress_blur(&app, false);
+    result
+}
+
+#[tauri::command]
+pub fn accessibility_status() -> bool {
+    crate::paste::accessibility_granted()
+}
+
+#[tauri::command]
+pub fn request_accessibility() -> bool {
+    crate::paste::request_accessibility()
+}
+
+fn state_suppress_blur(app: &AppHandle, suppress: bool) {
+    app.state::<AppState>()
+        .suppress_blur_hide
+        .store(suppress, Ordering::Relaxed);
+}
+
 #[tauri::command]
 pub fn move_clip_to_category(
     app: AppHandle,

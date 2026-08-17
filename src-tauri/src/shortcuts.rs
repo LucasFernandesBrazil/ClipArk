@@ -4,15 +4,16 @@ use tauri::{
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 const LAUNCHER_WIDTH: f64 = 1180.0;
-const LAUNCHER_HEIGHT: f64 = 420.0;
-const TOP_OVERLAY_MARGIN: f64 = 28.0;
+const LAUNCHER_HEIGHT: f64 = 320.0;
+const BOTTOM_OVERLAY_MARGIN: f64 = 16.0;
+const SIDE_INSET: f64 = 48.0;
+const MINIMUM_WIDTH: f64 = 720.0;
 
 pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
     tauri_plugin_global_shortcut::Builder::new()
         .with_handler(|app, _shortcut, event| {
             if event.state() == ShortcutState::Pressed {
-                let _ = show_launcher(app);
-                let _ = app.emit("launcher-opened", ());
+                let _ = toggle_launcher(app);
             }
         })
         .build()
@@ -28,9 +29,25 @@ pub fn register(app: &AppHandle) -> Result<(), tauri_plugin_global_shortcut::Err
     Ok(())
 }
 
+/// Cmd+Shift+V acts as a toggle: bring the launcher up, or dismiss it when it is
+/// already the focused window.
+pub fn toggle_launcher(app: &AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let visible = window.is_visible().unwrap_or(false);
+        let focused = window.is_focused().unwrap_or(false);
+        if visible && focused {
+            window.hide().map_err(|error| error.to_string())?;
+            return Ok(());
+        }
+    }
+    show_launcher(app)?;
+    let _ = app.emit("launcher-opened", ());
+    Ok(())
+}
+
 pub fn show_launcher(app: &AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
-        position_window_as_top_overlay(&window)?;
+        position_window_as_bottom_overlay(&window)?;
         let _ = window.set_always_on_top(true);
         window.show().map_err(|error| error.to_string())?;
         window.set_focus().map_err(|error| error.to_string())?;
@@ -40,13 +57,15 @@ pub fn show_launcher(app: &AppHandle) -> Result<(), String> {
 
 pub fn position_launcher(app: &AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
-        position_window_as_top_overlay(&window)?;
+        position_window_as_bottom_overlay(&window)?;
         let _ = window.set_always_on_top(true);
     }
     Ok(())
 }
 
-fn position_window_as_top_overlay(window: &WebviewWindow) -> Result<(), String> {
+/// Docks the launcher to the bottom of the active monitor's work area. `work_area`
+/// already excludes the Dock and the menu bar, so the bar floats right above the Dock.
+fn position_window_as_bottom_overlay(window: &WebviewWindow) -> Result<(), String> {
     let Some(monitor) = window.current_monitor().map_err(|error| error.to_string())? else {
         window
             .set_size(Size::Logical(LogicalSize {
@@ -65,12 +84,13 @@ fn position_window_as_top_overlay(window: &WebviewWindow) -> Result<(), String> 
     let work_width = work_area.size.width as f64 / scale;
     let work_height = work_area.size.height as f64 / scale;
 
-    let available_width = (work_width - 32.0).max(320.0);
-    let minimum_width = 760.0_f64.min(available_width);
-    let width = LAUNCHER_WIDTH.min(available_width).max(minimum_width);
-    let height = LAUNCHER_HEIGHT.min((work_height - TOP_OVERLAY_MARGIN - 16.0).max(320.0));
+    let available_width = (work_width - SIDE_INSET).max(320.0);
+    let width = LAUNCHER_WIDTH
+        .min(available_width)
+        .max(MINIMUM_WIDTH.min(available_width));
+    let height = LAUNCHER_HEIGHT.min((work_height - BOTTOM_OVERLAY_MARGIN * 2.0).max(280.0));
     let x = work_x + (work_width - width) / 2.0;
-    let y = work_y + TOP_OVERLAY_MARGIN;
+    let y = work_y + work_height - height - BOTTOM_OVERLAY_MARGIN;
 
     window
         .set_size(Size::Logical(LogicalSize { width, height }))

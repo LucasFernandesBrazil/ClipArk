@@ -43,6 +43,22 @@ export function copyClip(id: string) {
   return invoke<void>("copy_clip", { id });
 }
 
+/** Rejection reason from `pasteClip` when macOS Accessibility access is missing. */
+export const ACCESSIBILITY_DENIED = "accessibility-denied";
+
+/** Copies the clip and pastes it into the previously focused app. Hides the launcher. */
+export function pasteClip(id: string) {
+  return invoke<void>("paste_clip", { id });
+}
+
+export function accessibilityStatus() {
+  return invoke<boolean>("accessibility_status");
+}
+
+export function requestAccessibility() {
+  return invoke<boolean>("request_accessibility");
+}
+
 export function moveClipToCategory(id: string, categoryId: string | null) {
   return invoke<Clip>("move_clip_to_category", { id, categoryId });
 }

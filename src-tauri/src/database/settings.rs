@@ -7,6 +7,7 @@ pub fn get(connection: &Connection) -> Result<AppSettings> {
         launch_at_startup: get_bool(connection, "launch_at_startup", false)?,
         max_stored_clips: get_limit(connection)?,
         tracking_paused: get_tracking_paused(connection)?,
+        auto_paste: get_bool(connection, "auto_paste", true)?,
     })
 }
 
@@ -18,6 +19,7 @@ pub fn save(connection: &Connection, settings: &AppSettings) -> Result<()> {
         .unwrap_or_else(|| "unlimited".to_string());
     set_value(connection, "max_stored_clips", &max_value)?;
     set_value(connection, "tracking_paused", if settings.tracking_paused { "true" } else { "false" })?;
+    set_value(connection, "auto_paste", if settings.auto_paste { "true" } else { "false" })?;
     Ok(())
 }
 

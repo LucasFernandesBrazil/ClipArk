@@ -36,4 +36,5 @@ pub struct AppSettings {
     pub launch_at_startup: bool,
     pub max_stored_clips: Option<i64>,
     pub tracking_paused: bool,
+    pub auto_paste: bool,
 }

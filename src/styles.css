@@ -4,7 +4,6 @@
 
 :root {
   color-scheme: dark;
-  background: #6fc8f2;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,21 +14,22 @@
   box-sizing: border-box;
 }
 
+/* The window itself is transparent — the macOS vibrancy layer paints the backdrop. */
 html,
 body,
 #root {
   width: 100%;
   height: 100%;
   margin: 0;
+  background: transparent;
 }
 
 body {
   overflow: hidden;
-  color: #f4f7fb;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.18) 58%, rgba(255, 255, 255, 0)),
-    radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.46), transparent 18rem),
-    linear-gradient(180deg, #63bef0 0%, #aee3f8 70%, #c8edf8 100%);
+  color: #f5f5f7;
+  /* Nothing in the launcher is selectable text; dragging should never start a selection. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 button,
@@ -38,50 +38,47 @@ select {
   font: inherit;
 }
 
+input {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #0080ff;
+  outline: 2px solid #0a84ff;
   outline-offset: 2px;
+}
+
+.launcher-shell {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  /* An extra scrim over the vibrancy keeps text legible on bright wallpapers. */
+  background: rgba(18, 18, 20, 0.35);
 }
 
 .clip-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #2d3541 transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
 .clip-scrollbar::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 .clip-scrollbar::-webkit-scrollbar-thumb {
-  background: #2d3541;
-  border: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.16);
+  border: 2px solid transparent;
   border-radius: 999px;
   background-clip: padding-box;
 }
 
-.launcher-shell {
-  background: #020202;
-  border-radius: 42px;
-  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.42);
+.clip-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+  background-clip: padding-box;
 }
 
-.glass-rail {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.12)),
-    rgba(111, 200, 242, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: inset 0 1px 10px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(24px);
-}
-
-.clip-card-surface::after {
-  position: absolute;
-  inset: auto 0 0;
-  height: 48%;
-  content: "";
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.74));
+.clip-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }

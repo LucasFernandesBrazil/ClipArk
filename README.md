@@ -98,6 +98,7 @@ src-tauri/
     ├── database/
     ├── commands.rs
     ├── models.rs
+    ├── paste.rs
     ├── shortcuts.rs
     ├── tray.rs
     └── lib.rs
