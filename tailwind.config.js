@@ -8,15 +8,17 @@ export default {
     extend: {
       colors: {
         ark: {
-          bg: "#0b0d10",
-          panel: "#11151b",
-          panelSoft: "#171c23",
-          border: "#252c35",
-          text: "#f4f7fb",
-          muted: "#8b97a7",
-          accent: "#5eead4",
-          accentSoft: "#173f3b",
+          bg: "#020202",
+          panel: "#050505",
+          panelSoft: "#1b1b1b",
+          border: "#2b2b2b",
+          text: "#f7f7f7",
+          muted: "#8d8d93",
+          accent: "#0080ff",
+          accentSoft: "#0b2f58",
           danger: "#fb7185",
+          sky: "#6fc8f2",
+          skySoft: "#bde8fb",
         },
       },
       fontFamily: {
@@ -24,7 +26,7 @@ export default {
         mono: ["JetBrains Mono", "SFMono-Regular", "Menlo", "monospace"],
       },
       boxShadow: {
-        launcher: "0 24px 70px rgba(0, 0, 0, 0.42)",
+        launcher: "0 26px 90px rgba(0, 0, 0, 0.42)",
       },
     },
   },

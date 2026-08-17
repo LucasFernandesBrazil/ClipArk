@@ -4,7 +4,7 @@
 
 :root {
   color-scheme: dark;
-  background: #0b0d10;
+  background: #6fc8f2;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,8 +27,9 @@ body {
   overflow: hidden;
   color: #f4f7fb;
   background:
-    radial-gradient(circle at top left, rgba(94, 234, 212, 0.07), transparent 28rem),
-    #0b0d10;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.18) 58%, rgba(255, 255, 255, 0)),
+    radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.46), transparent 18rem),
+    linear-gradient(180deg, #63bef0 0%, #aee3f8 70%, #c8edf8 100%);
 }
 
 button,
@@ -40,7 +41,7 @@ select {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #5eead4;
+  outline: 2px solid #0080ff;
   outline-offset: 2px;
 }
 
@@ -58,4 +59,29 @@ select:focus-visible {
   border: 3px solid transparent;
   border-radius: 999px;
   background-clip: padding-box;
+}
+
+.launcher-shell {
+  background: #020202;
+  border-radius: 42px;
+  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.42);
+}
+
+.glass-rail {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.12)),
+    rgba(111, 200, 242, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 10px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(24px);
+}
+
+.clip-card-surface::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 48%;
+  content: "";
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.74));
 }

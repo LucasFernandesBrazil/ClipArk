@@ -13,13 +13,18 @@
     "windows": [
       {
         "title": "ClipArk",
-        "width": 940,
-        "height": 640,
+        "width": 1180,
+        "height": 420,
         "minWidth": 760,
-        "minHeight": 520,
+        "minHeight": 340,
         "center": true,
         "resizable": true,
-        "decorations": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
+        "skipTaskbar": true,
+        "transparent": false,
+        "shadow": true,
         "visible": true
       }
     ],

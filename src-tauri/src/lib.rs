@@ -49,6 +49,7 @@ pub fn run() {
             app.manage(AppState::new(connection, tracking_paused));
             tray::setup(app)?;
             let _ = shortcuts::register(app.handle());
+            let _ = shortcuts::position_launcher(app.handle());
             clipboard::start_monitor(app.handle().clone());
             Ok(())
         })
