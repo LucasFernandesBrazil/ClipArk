@@ -11,7 +11,12 @@ pub fn all(connection: &Connection) -> Result<Vec<Category>> {
     rows.collect()
 }
 
-pub fn create(connection: &Connection, name: &str, color: &str, icon: Option<String>) -> Result<Category> {
+pub fn create(
+    connection: &Connection,
+    name: &str,
+    color: &str,
+    icon: Option<String>,
+) -> Result<Category> {
     let now = Utc::now().to_rfc3339();
     let id = Uuid::new_v4().to_string();
     connection.execute(
@@ -21,7 +26,13 @@ pub fn create(connection: &Connection, name: &str, color: &str, icon: Option<Str
     get(connection, &id)?.ok_or(rusqlite::Error::QueryReturnedNoRows)
 }
 
-pub fn update(connection: &Connection, id: &str, name: &str, color: &str, icon: Option<String>) -> Result<Category> {
+pub fn update(
+    connection: &Connection,
+    id: &str,
+    name: &str,
+    color: &str,
+    icon: Option<String>,
+) -> Result<Category> {
     let now = Utc::now().to_rfc3339();
     connection.execute(
         "UPDATE categories SET name = ?1, color = ?2, icon = ?3, updated_at = ?4 WHERE id = ?5",
@@ -31,7 +42,10 @@ pub fn update(connection: &Connection, id: &str, name: &str, color: &str, icon: 
 }
 
 pub fn delete(connection: &Connection, id: &str) -> Result<()> {
-    connection.execute("UPDATE clips SET category_id = NULL WHERE category_id = ?1", params![id])?;
+    connection.execute(
+        "UPDATE clips SET category_id = NULL WHERE category_id = ?1",
+        params![id],
+    )?;
     connection.execute("DELETE FROM categories WHERE id = ?1", params![id])?;
     Ok(())
 }
