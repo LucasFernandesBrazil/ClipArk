@@ -12,6 +12,7 @@
 </p>
 
 <p>
+  <a href="https://github.com/LucasFernandesBrazil/ClipArk/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/LucasFernandesBrazil/ClipArk?style=flat-square&color=65BC80&label=download"></a>
   <a href="#-quick-start"><img alt="Quick start" src="https://img.shields.io/badge/Quick%20start-65BC80?style=flat-square&logoColor=white"></a>
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-1c1c1e?style=flat-square"></a>
   <img alt="Platform: macOS" src="https://img.shields.io/badge/platform-macOS-1c1c1e?style=flat-square&logo=apple&logoColor=white">
@@ -23,6 +24,7 @@
 
 <p>
   <a href="#-why-clipark">Why</a> ·
+  <a href="#download">Download</a> ·
   <a href="#-quick-start">Quick start</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-auto-paste">Auto-paste</a> ·
@@ -59,9 +61,47 @@ history lives in a single SQLite file on your own machine, and that is the whole
 
 ## 🚀 Quick start
 
+### Download
+
+Grab the latest `.dmg` from the
+**[Releases page](https://github.com/LucasFernandesBrazil/ClipArk/releases/latest)** — one
+universal build, Apple silicon and Intel, macOS 11 or newer. No clone, no toolchain.
+
+1. Open the `.dmg` and drag **ClipArk** into `Applications`.
+2. Launch it — see [Opening an unsigned build](#opening-an-unsigned-build) below, because
+   macOS will block the first attempt.
+3. Grant **Accessibility** access when prompted if you want <kbd>⏎</kbd> to paste for you.
+
+#### Opening an unsigned build
+
+ClipArk is not signed with a paid Apple Developer ID and is not notarised, so the first
+launch is blocked with *"ClipArk is damaged"* or *"cannot be opened because Apple cannot
+check it for malicious software."* Neither message means what it says — it means nobody
+paid Apple $99.
+
+Try to open it once, dismiss the dialog, then go to **System Settings → Privacy &
+Security** and press **Open Anyway** next to the ClipArk entry. On macOS 15 and newer that
+is the reliable path; the old right-click → *Open* shortcut no longer always works.
+
+If you prefer the terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ClipArk.app
+```
+
+Every release ships a `SHA256SUMS.txt`, so you can verify the download first:
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
 > [!NOTE]
-> There is no published release yet, so ClipArk is built from source. It takes one
-> command once the prerequisites are in place.
+> macOS ties Accessibility permission to the exact binary it was granted to. Because
+> builds are unsigned, **you may need to re-grant Accessibility access after updating.**
+> Remove the old ClipArk entry under *System Settings → Privacy & Security →
+> Accessibility* and add the new one — a stale entry silently does nothing.
+
+### Build from source
 
 **Prerequisites**
 
@@ -86,8 +126,8 @@ To produce an app bundle instead:
 npm run tauri build
 ```
 
-The result lands in `src-tauri/target/release/bundle/`. Builds are **unsigned**, so
-macOS Gatekeeper will ask before opening a bundle you moved to `/Applications`.
+The result lands in `src-tauri/target/release/bundle/`. Local builds are **unsigned**,
+exactly like released ones — see [Opening an unsigned build](#opening-an-unsigned-build).
 
 **First run**
 
@@ -389,7 +429,7 @@ Ideas, not promises. Ordered roughly by how much they'd improve daily use.
 - [ ] Customisable shortcuts
 - [ ] Import / export
 - [ ] Light mode
-- [ ] Signed and notarised releases
+- [ ] Signed and notarised releases — downloads are currently unsigned
 - [ ] Windows and Linux parity
 
 ---
@@ -397,7 +437,8 @@ Ideas, not promises. Ordered roughly by how much they'd improve daily use.
 ## 🤝 Contributing
 
 Issues and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the setup,
-the code style and how to regenerate assets.
+the code style and how to regenerate assets. Releases are cut with
+`npm run release <version>`; every version is recorded in [CHANGELOG.md](CHANGELOG.md).
 
 One rule shapes everything else: **ClipArk stays local-first.** No networked services, no
 accounts, no analytics, no phoning home. A change that breaks that will be declined no

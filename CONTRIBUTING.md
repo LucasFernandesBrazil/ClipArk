@@ -100,6 +100,41 @@ Keep brand assets out of `public/` — Vite copies that directory wholesale into
 bundle, so anything parked there ships to users whether the app uses it or not. Only
 `favicon.png` belongs there.
 
+## Releasing
+
+Versions live in five files. **Never edit one by hand** — `scripts/release.mjs` is the only
+supported path, and it refuses to run if the five disagree.
+
+1. Promote the entries under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) to a new
+   `## [X.Y.Z] - YYYY-MM-DD` heading, add the `[X.Y.Z]: …/compare/vPREV...vX.Y.Z` link
+   reference at the bottom, repoint `[Unreleased]`, and commit. The release script aborts
+   if the section is missing or empty.
+2. Rehearse, then cut:
+
+   ```bash
+   npm run release:dry -- X.Y.Z
+   npm run release X.Y.Z
+   ```
+
+   That syncs `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`,
+   `src-tauri/Cargo.lock` and `src-tauri/tauri.conf.json`, commits `chore(release): vX.Y.Z`
+   and creates an annotated `vX.Y.Z` tag. Nothing is pushed, so
+   `git tag -d vX.Y.Z && git reset --hard HEAD~1` undoes all of it.
+3. Push. The tag is what triggers the build:
+
+   ```bash
+   git push origin main && git push origin vX.Y.Z
+   ```
+
+4. `.github/workflows/release.yml` builds a universal `.dmg` on a macOS runner (~30–45 min)
+   and opens a **draft** release with the disk image and a `SHA256SUMS.txt` attached.
+5. Download that `.dmg`, check it on a Mac that has never run a local build, then publish
+   the release. If something is wrong, delete the draft and the tag — nothing was public.
+
+To check that the universal build still compiles without cutting a release, run the
+workflow manually from the Actions tab with **publish** off; it uploads the `.dmg` as a
+workflow artifact and creates no tag and no release.
+
 ## Reporting things
 
 - **Bugs and features** → the [issue tracker](https://github.com/LucasFernandesBrazil/ClipArk/issues).
