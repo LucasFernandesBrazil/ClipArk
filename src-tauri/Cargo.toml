@@ -1,6 +1,6 @@
 [package]
 name = "clipark"
-version = "0.1.0"
+version = "0.2.0"
 description = "Everything you copy, kept in one place."
 authors = ["ClipArk contributors"]
 edition = "2021"
