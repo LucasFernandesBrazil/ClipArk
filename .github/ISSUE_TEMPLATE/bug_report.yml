@@ -44,7 +44,8 @@ body:
         - Search, favourites or categories
         - Menu bar / tray
         - Settings
-        - Build or install
+        - Download or install (Gatekeeper, the .dmg won't open)
+        - Build from source
         - Something else
     validations:
       required: true
@@ -70,9 +71,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: ClipArk version or commit
-      description: There are no releases yet, so the commit SHA you built from is ideal.
-      placeholder: "main @ bbf075f"
+      label: ClipArk version
+      description: Shown at the bottom of Settings. If you built from source, the commit SHA.
+      placeholder: "0.1.0"
     validations:
       required: true
 

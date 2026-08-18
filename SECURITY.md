@@ -14,8 +14,10 @@ credit in the release notes unless you'd rather not.
 
 ## Supported versions
 
-ClipArk is pre-1.0 and has no published releases yet. Only the current `main` branch is
-supported.
+ClipArk is pre-1.0. Only the most recent release on the
+[Releases page](https://github.com/LucasFernandesBrazil/ClipArk/releases) and the current
+`main` branch are supported. Fixes ship as a new patch release rather than being
+backported to older tags.
 
 ## What ClipArk is and is not
 
@@ -24,7 +26,8 @@ Being honest about this matters more than a reassuring paragraph would.
 ### What holds up
 
 - **No network code.** No HTTP client, no fetch plugin, no analytics, no telemetry, no
-  update checker. Clipboard content has nowhere to go.
+  update checker. Clipboard content has nowhere to go. There is no updater either:
+  releases are downloaded by hand from GitHub, and the app never checks for them.
 - **A minimal permission allowlist.** `src-tauri/capabilities/default.json` grants only
   clipboard text read/write, global-shortcut registration, and autostart toggling.
 - **Nothing is logged.** Clipboard content never reaches stdout or a log file.
@@ -70,4 +73,7 @@ run code as you can read the clipboard directly, with or without ClipArk install
 - Physical access to an unlocked Mac
 - Vulnerabilities in Tauri, Rust crates or npm packages: report those upstream, though a
   heads-up here is appreciated if ClipArk needs to pin or patch
-- Unsigned build warnings from Gatekeeper: builds from source are expected to be unsigned
+- Unsigned build warnings from Gatekeeper. Released disk images are unsigned and not
+  notarised, exactly like builds from source; verify a download against the
+  `SHA256SUMS.txt` published with each release. Losing Accessibility permission after an
+  update is a consequence of unsigned builds, not a vulnerability.

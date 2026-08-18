@@ -1,0 +1,165 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Create a GitHub Release. Off = build only, uploaded as a workflow artifact."
+        type: boolean
+        default: false
+
+# Needed to create the release and upload the .dmg. Nothing else.
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    name: macOS (universal)
+    runs-on: macos-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: v
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#v}"
+          else
+            VERSION="$(node -p "require('./src-tauri/tauri.conf.json').version")"
+            TAG="v${VERSION}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dmg=ClipArk_${VERSION}_universal.dmg" >> "$GITHUB_OUTPUT"
+
+      # Fails in seconds rather than 40 minutes into the build.
+      - name: Verify every version file matches the tag
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.v.outputs.version }}"
+          fail=0
+          check () {
+            if [ "$2" != "$VERSION" ]; then
+              echo "::error file=$1::$1 says '$2' but the tag says '$VERSION'"
+              fail=1
+            fi
+          }
+          check src-tauri/tauri.conf.json "$(node -p "require('./src-tauri/tauri.conf.json').version")"
+          check package.json "$(node -p "require('./package.json').version")"
+          check src-tauri/Cargo.toml "$(sed -n '/^\[package\]/,/^\[/ s/^version = "\(.*\)"$/\1/p' src-tauri/Cargo.toml | head -1)"
+          check src-tauri/Cargo.lock "$(awk '/^name = "clipark"$/{getline; sub(/^version = "/, ""); sub(/"$/, ""); print; exit}' src-tauri/Cargo.lock)"
+          exit $fail
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Add Apple targets
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      # Only the registry: a two-architecture release target/ is several GB and would
+      # evict ci.yml's cache from the repository's 10 GB budget.
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-release-
+
+      - name: Compose release notes
+        id: notes
+        run: |
+          set -euo pipefail
+          NOTES="${RUNNER_TEMP}/release-notes.md"
+          node scripts/changelog-section.mjs "${{ steps.v.outputs.version }}" > "$NOTES"
+          printf '\n' >> "$NOTES"
+          cat .github/release-body-footer.md >> "$NOTES"
+          echo "path=$NOTES" >> "$GITHUB_OUTPUT"
+          cat "$NOTES"
+
+      # No tagName input, so the action builds and stops — the release is ours to create.
+      - name: Build universal app bundle
+        uses: tauri-apps/tauri-action@v0
+        with:
+          args: --target universal-apple-darwin
+
+      - name: Checksum the disk image
+        id: dist
+        run: |
+          set -euo pipefail
+          BUNDLE="src-tauri/target/universal-apple-darwin/release/bundle"
+          DIR="$BUNDLE/dmg"
+          DMG="$DIR/${{ steps.v.outputs.dmg }}"
+          if [ ! -f "$DMG" ]; then
+            echo "::error::expected $DMG"
+            ls -la "$DIR" || true
+            exit 1
+          fi
+          ( cd "$DIR" && shasum -a 256 "${{ steps.v.outputs.dmg }}" > SHA256SUMS.txt )
+          cat "$DIR/SHA256SUMS.txt"
+          # Proves the slices were actually lipo'd together rather than a single arch
+          # being bundled under a "universal" name.
+          BIN="$BUNDLE/macos/ClipArk.app/Contents/MacOS/ClipArk"
+          if [ ! -f "$BIN" ]; then
+            echo "::error::expected $BIN"
+            find "$BUNDLE" -maxdepth 3
+            exit 1
+          fi
+          ARCHS="$(lipo -archs "$BIN")"
+          echo "architectures: $ARCHS"
+          case "$ARCHS" in
+            *x86_64*arm64*|*arm64*x86_64*) ;;
+            *) echo "::error::expected a universal binary, got '$ARCHS'"; exit 1 ;;
+          esac
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact (build-only run)
+        if: github.event_name == 'workflow_dispatch' && inputs.publish != true
+        uses: actions/upload-artifact@v4
+        with:
+          name: clipark-${{ steps.v.outputs.version }}-universal
+          if-no-files-found: error
+          path: |
+            ${{ steps.dist.outputs.dir }}/${{ steps.v.outputs.dmg }}
+            ${{ steps.dist.outputs.dir }}/SHA256SUMS.txt
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push' || inputs.publish == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
+          VERSION: ${{ steps.v.outputs.version }}
+          DIR: ${{ steps.dist.outputs.dir }}
+          DMG: ${{ steps.v.outputs.dmg }}
+          NOTES: ${{ steps.notes.outputs.path }}
+        run: |
+          set -euo pipefail
+          # Only a suffixed tag (v0.3.0-rc.1) is a prerelease. Plain 0.x releases must stay
+          # "latest", or the README download link and badge stop resolving.
+          # Built as one non-empty array: `"${empty[@]}"` is an unbound-variable error
+          # under `set -u` in the bash 3.2 that ships with macOS.
+          ARGS=(--title "ClipArk $TAG" --notes-file "$NOTES" --draft --verify-tag)
+          case "$VERSION" in *-*) ARGS+=(--prerelease) ;; esac
+          gh release create "$TAG" \
+            "${ARGS[@]}" \
+            "$DIR/$DMG#ClipArk $VERSION — macOS universal (Apple silicon + Intel)" \
+            "$DIR/SHA256SUMS.txt#SHA-256 checksum"
+          echo "Draft release created — review the .dmg, then publish:"
+          gh release view "$TAG" --json url --jq .url

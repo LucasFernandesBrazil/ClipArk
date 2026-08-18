@@ -12,6 +12,7 @@
 </p>
 
 <p>
+  <a href="https://github.com/LucasFernandesBrazil/ClipArk/releases/latest"><img alt="Última release" src="https://img.shields.io/github/v/release/LucasFernandesBrazil/ClipArk?style=flat-square&color=65BC80&label=download"></a>
   <a href="#-começando"><img alt="Começando" src="https://img.shields.io/badge/Come%C3%A7ando-65BC80?style=flat-square&logoColor=white"></a>
   <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-1c1c1e?style=flat-square"></a>
   <img alt="Plataforma: macOS" src="https://img.shields.io/badge/plataforma-macOS-1c1c1e?style=flat-square&logo=apple&logoColor=white">
@@ -23,6 +24,7 @@
 
 <p>
   <a href="#-por-que-o-clipark">Por quê</a> ·
+  <a href="#baixar">Baixar</a> ·
   <a href="#-começando">Começando</a> ·
   <a href="#-funcionalidades">Funcionalidades</a> ·
   <a href="#-colagem-automática">Colagem automática</a> ·
@@ -59,9 +61,49 @@ projeto inteiro.
 
 ## 🚀 Começando
 
+### Baixar
+
+Pegue o `.dmg` mais recente na
+**[página de Releases](https://github.com/LucasFernandesBrazil/ClipArk/releases/latest)** —
+um build universal só, Apple silicon e Intel, macOS 11 ou mais novo. Sem clonar, sem
+toolchain.
+
+1. Abra o `.dmg` e arraste o **ClipArk** para `Applications`.
+2. Abra o app — veja [Abrindo um build não assinado](#abrindo-um-build-não-assinado)
+   logo abaixo, porque o macOS vai bloquear a primeira tentativa.
+3. Conceda o acesso de **Acessibilidade** quando for pedido, se quiser que o
+   <kbd>⏎</kbd> cole por você.
+
+#### Abrindo um build não assinado
+
+O ClipArk não é assinado com um Apple Developer ID pago nem é notarizado, então a primeira
+abertura é bloqueada com *"ClipArk está danificado"* ou *"não pode ser aberto porque a
+Apple não consegue verificar se ele contém software malicioso"*. Nenhuma das duas mensagens
+significa o que diz — significa que ninguém pagou os US$ 99 para a Apple.
+
+Tente abrir uma vez, feche o aviso, e vá em **Ajustes do Sistema → Privacidade e
+Segurança** e clique em **Abrir Assim Mesmo** na entrada do ClipArk. No macOS 15 em diante
+esse é o caminho confiável; o antigo botão direito → *Abrir* nem sempre funciona mais.
+
+Se preferir o terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ClipArk.app
+```
+
+Toda release inclui um `SHA256SUMS.txt`, então dá para conferir o download antes:
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
 > [!NOTE]
-> Ainda não existe release publicada, então o ClipArk é compilado a partir do código-fonte.
-> É um comando só, depois que os pré-requisitos estiverem no lugar.
+> O macOS amarra a permissão de Acessibilidade ao binário exato que a recebeu. Como os
+> builds não são assinados, **pode ser necessário conceder o acesso de novo depois de
+> atualizar.** Remova a entrada antiga do ClipArk em *Ajustes do Sistema → Privacidade e
+> Segurança → Acessibilidade* e adicione a nova — uma entrada velha fica lá sem funcionar.
+
+### Compilar do código-fonte
 
 **Pré-requisitos**
 
@@ -86,9 +128,9 @@ Para gerar o bundle do app:
 npm run tauri build
 ```
 
-O resultado sai em `src-tauri/target/release/bundle/`. Os builds **não são assinados**,
-então o Gatekeeper do macOS vai pedir confirmação se você mover o bundle para
-`/Applications`.
+O resultado sai em `src-tauri/target/release/bundle/`. Builds locais **não são
+assinados**, exatamente como os publicados — veja
+[Abrindo um build não assinado](#abrindo-um-build-não-assinado).
 
 **Primeira execução**
 
@@ -393,7 +435,7 @@ Ideias, não promessas. Ordenadas mais ou menos pelo quanto melhorariam o uso di
 - [ ] Atalhos personalizáveis
 - [ ] Importar / exportar
 - [ ] Modo claro
-- [ ] Releases assinadas e notarizadas
+- [ ] Releases assinadas e notarizadas — os downloads hoje não são assinados
 - [ ] Paridade com Windows e Linux
 
 ---
@@ -401,7 +443,8 @@ Ideias, não promessas. Ordenadas mais ou menos pelo quanto melhorariam o uso di
 ## 🤝 Como contribuir
 
 Issues e pull requests são bem-vindos. O [CONTRIBUTING.md](CONTRIBUTING.md) cobre o setup,
-o estilo de código e como regerar os assets.
+o estilo de código e como regerar os assets. As releases são cortadas com
+`npm run release <versão>`; toda versão fica registrada no [CHANGELOG.md](CHANGELOG.md).
 
 Uma regra molda todo o resto: **o ClipArk continua local-first.** Nada de serviços em rede,
 contas, analytics ou telemetria. Uma mudança que quebre isso será recusada por melhor que

@@ -1,3 +1,4 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import type { AppSettings, Category, Clip } from "../types";
 
@@ -89,4 +90,9 @@ export function showSettingsWindow() {
 
 export function seedDevData() {
   return invoke<void>("seed_dev_data");
+}
+
+/** The bundle version from `src-tauri/tauri.conf.json`, baked in at build time. */
+export function appVersion() {
+  return getVersion();
 }

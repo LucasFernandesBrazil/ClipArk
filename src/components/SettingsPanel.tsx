@@ -1,6 +1,6 @@
 import { Check, PauseCircle, PlayCircle, Plus, RotateCcw, ShieldAlert, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { accessibilityStatus, requestAccessibility } from "../lib/tauri";
+import { accessibilityStatus, appVersion, requestAccessibility } from "../lib/tauri";
 import type { AppSettings, Category } from "../types";
 
 type SettingsPanelProps = {
@@ -41,9 +41,15 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   const active = settings ?? fallback;
   const [trusted, setTrusted] = useState<boolean | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
 
   useEffect(() => {
     void accessibilityStatus().then(setTrusted);
+  }, []);
+
+  // Outside a Tauri window (plain `npm run dev`) this rejects; the label just stays hidden.
+  useEffect(() => {
+    void appVersion().then(setVersion, () => setVersion(null));
   }, []);
 
   return (
@@ -153,9 +159,16 @@ export function SettingsPanel({
         ) : null}
       </div>
 
-      <p className="mt-4 text-caption text-ark-textFaint">
-        Everything stays on this Mac — ClipArk never sends your clipboard anywhere.
-      </p>
+      <div className="mt-4 flex items-baseline justify-between gap-3 text-caption text-ark-textFaint">
+        <p>Everything stays on this Mac — ClipArk never sends your clipboard anywhere.</p>
+        {version ? (
+          // select-text because styles.css turns selection off for the whole body, and
+          // the bug report template asks people to type this number in.
+          <span className="shrink-0 select-text tabular-nums" title="ClipArk version">
+            v{version}
+          </span>
+        ) : null}
+      </div>
     </section>
   );
 }
