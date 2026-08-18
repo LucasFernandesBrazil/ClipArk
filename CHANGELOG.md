@@ -8,6 +8,8 @@ ClipArk is pre-1.0, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-18
+
 ### Fixed
 
 - Release builds are now signed ad-hoc in CI (`APPLE_SIGNING_IDENTITY=-`). 0.1.0 shipped a
@@ -67,8 +69,9 @@ First public release. macOS only, distributed as an unsigned universal disk imag
   See [SECURITY.md](SECURITY.md).
 - Builds are unsigned and not notarised, so macOS Gatekeeper blocks the first launch and
   Accessibility access may need to be re-granted after an update. (Ad-hoc signing landed
-  after this release — see Unreleased.)
+  after this release — see 0.2.0.)
 - Text clips only — images and files are not captured yet.
 
-[Unreleased]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LucasFernandesBrazil/ClipArk/releases/tag/v0.1.0
