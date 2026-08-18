@@ -8,6 +8,23 @@ ClipArk is pre-1.0, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+### Fixed
+
+- Release builds are now signed ad-hoc in CI (`APPLE_SIGNING_IDENTITY=-`). 0.1.0 shipped a
+  bundle with no signature at all — `lipo` invalidates the per-slice signature the linker
+  writes when it merges the two architectures, and nothing re-signed the `.app` afterwards
+  — which macOS reports as *"ClipArk is damaged and can't be opened"*, a dialog with no
+  **Open Anyway** button. Signed builds get the ordinary *"Apple could not verify…"*
+  prompt instead, which can be dismissed from *Privacy & Security*.
+- The release workflow now mounts the finished `.dmg` and fails if the app inside it is
+  not validly signed or is not a genuine universal binary, so neither can silently regress.
+
+### Changed
+
+- The install instructions in both READMEs and in the release notes now quote the dialog
+  macOS actually shows and give the exact *Privacy & Security → Open Anyway* path for
+  macOS 15 and newer.
+
 ## [0.1.0] - 2026-08-17
 
 First public release. macOS only, distributed as an unsigned universal disk image.
@@ -49,7 +66,8 @@ First public release. macOS only, distributed as an unsigned universal disk imag
 - **The history database is not encrypted.** Anything you copy is stored in plain text.
   See [SECURITY.md](SECURITY.md).
 - Builds are unsigned and not notarised, so macOS Gatekeeper blocks the first launch and
-  Accessibility access may need to be re-granted after an update.
+  Accessibility access may need to be re-granted after an update. (Ad-hoc signing landed
+  after this release — see Unreleased.)
 - Text clips only — images and files are not captured yet.
 
 [Unreleased]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.1.0...HEAD

@@ -69,27 +69,42 @@ um build universal só, Apple silicon e Intel, macOS 11 ou mais novo. Sem clonar
 toolchain.
 
 1. Abra o `.dmg` e arraste o **ClipArk** para `Applications`.
-2. Abra o app — veja [Abrindo um build não assinado](#abrindo-um-build-não-assinado)
+2. Abra o app — veja [Abrindo um build não verificado](#abrindo-um-build-não-verificado)
    logo abaixo, porque o macOS vai bloquear a primeira tentativa.
 3. Conceda o acesso de **Acessibilidade** quando for pedido, se quiser que o
    <kbd>⏎</kbd> cole por você.
 
-#### Abrindo um build não assinado
+#### Abrindo um build não verificado
 
-O ClipArk não é assinado com um Apple Developer ID pago nem é notarizado, então a primeira
-abertura é bloqueada com *"ClipArk está danificado"* ou *"não pode ser aberto porque a
-Apple não consegue verificar se ele contém software malicioso"*. Nenhuma das duas mensagens
-significa o que diz — significa que ninguém pagou os US$ 99 para a Apple.
+As releases são assinadas em modo ad-hoc, mas não existe um Apple Developer ID pago por
+trás do ClipArk, então elas não são notarizadas. O macOS bloqueia a primeira abertura com:
 
-Tente abrir uma vez, feche o aviso, e vá em **Ajustes do Sistema → Privacidade e
-Segurança** e clique em **Abrir Assim Mesmo** na entrada do ClipArk. No macOS 15 em diante
-esse é o caminho confiável; o antigo botão direito → *Abrir* nem sempre funciona mais.
+> **A Apple não pôde verificar se o item "ClipArk" está livre de algum malware capaz de
+> danificar o Mac ou comprometer sua privacidade.**
 
-Se preferir o terminal:
+A mensagem é sobre notarização, não sobre o app. A Apple escaneia os builds notarizados e
+responde por eles, e esse escaneamento depende de uma assinatura de desenvolvedor de
+US$ 99/ano que ninguém pagou. Nada aqui foi analisado e reprovado — nunca foi enviado.
+
+Passar por isso leva dois passos, uma vez por versão:
+
+1. Dê dois cliques no **ClipArk** e clique em **OK** no aviso.
+2. Abra **Ajustes do Sistema → Privacidade e Segurança**, role até *Segurança* e clique em
+   **Abrir Assim Mesmo** na linha do ClipArk que acabou de aparecer. Confirme com Touch ID
+   ou a sua senha.
+
+No macOS 15 em diante esse é o único caminho confiável — o antigo botão direito → *Abrir*
+nem sempre funciona mais. Se preferir o terminal, remover a flag de quarentena pula o aviso
+por completo:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/ClipArk.app
 ```
+
+> [!TIP]
+> Um build que simplesmente não abre, com *"ClipArk está danificado e não pode ser
+> aberto"* — um aviso sem o botão **Abrir Assim Mesmo** — é anterior à assinatura ad-hoc.
+> Baixe a release mais recente; esse caso está corrigido e não deve voltar.
 
 Toda release inclui um `SHA256SUMS.txt`, então dá para conferir o download antes:
 
@@ -98,9 +113,9 @@ shasum -a 256 -c SHA256SUMS.txt
 ```
 
 > [!NOTE]
-> O macOS amarra a permissão de Acessibilidade ao binário exato que a recebeu. Como os
-> builds não são assinados, **pode ser necessário conceder o acesso de novo depois de
-> atualizar.** Remova a entrada antiga do ClipArk em *Ajustes do Sistema → Privacidade e
+> O macOS amarra a permissão de Acessibilidade ao binário exato que a recebeu. Uma
+> assinatura ad-hoc muda a cada build, então **pode ser necessário conceder o acesso de
+> novo depois de atualizar.** Remova a entrada antiga do ClipArk em *Ajustes do Sistema → Privacidade e
 > Segurança → Acessibilidade* e adicione a nova — uma entrada velha fica lá sem funcionar.
 
 ### Compilar do código-fonte
@@ -129,8 +144,15 @@ npm run tauri build
 ```
 
 O resultado sai em `src-tauri/target/release/bundle/`. Builds locais **não são
-assinados**, exatamente como os publicados — veja
-[Abrindo um build não assinado](#abrindo-um-build-não-assinado).
+assinados**; as releases são assinadas em modo ad-hoc, que é o que impede o macOS de
+chamá-las de danificadas. Para fazer igual:
+
+```bash
+APPLE_SIGNING_IDENTITY=- npm run tauri build
+```
+
+De um jeito ou de outro o build não é notarizado, então o macOS ainda bloqueia a primeira
+abertura — veja [Abrindo um build não verificado](#abrindo-um-build-não-verificado).
 
 **Primeira execução**
 
