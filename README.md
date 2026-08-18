@@ -68,26 +68,41 @@ Grab the latest `.dmg` from the
 universal build, Apple silicon and Intel, macOS 11 or newer. No clone, no toolchain.
 
 1. Open the `.dmg` and drag **ClipArk** into `Applications`.
-2. Launch it — see [Opening an unsigned build](#opening-an-unsigned-build) below, because
-   macOS will block the first attempt.
+2. Launch it — see [Opening an unverified build](#opening-an-unverified-build) below,
+   because macOS will block the first attempt.
 3. Grant **Accessibility** access when prompted if you want <kbd>⏎</kbd> to paste for you.
 
-#### Opening an unsigned build
+#### Opening an unverified build
 
-ClipArk is not signed with a paid Apple Developer ID and is not notarised, so the first
-launch is blocked with *"ClipArk is damaged"* or *"cannot be opened because Apple cannot
-check it for malicious software."* Neither message means what it says — it means nobody
-paid Apple $99.
+Releases are signed ad-hoc, but there is no paid Apple Developer ID behind ClipArk, so
+they are not notarised. macOS blocks the first launch with:
 
-Try to open it once, dismiss the dialog, then go to **System Settings → Privacy &
-Security** and press **Open Anyway** next to the ClipArk entry. On macOS 15 and newer that
-is the reliable path; the old right-click → *Open* shortcut no longer always works.
+> **Apple could not verify "ClipArk" is free of malware that may harm your Mac or
+> compromise your privacy.**
 
-If you prefer the terminal:
+That message is about notarisation, not about the app. Apple scans notarised builds and
+vouches for them, and that scan costs a $99/year developer membership nobody has paid.
+Nothing here was inspected and found wanting — it was never submitted.
+
+Getting past it takes two steps, once per version:
+
+1. Double-click **ClipArk**, then press **Done** on the dialog.
+2. Open **System Settings → Privacy & Security**, scroll down to *Security*, and press
+   **Open Anyway** on the ClipArk line that has just appeared. Confirm with Touch ID or
+   your password.
+
+On macOS 15 and newer that is the only reliable path — the old right-click → *Open*
+shortcut no longer always works. If you prefer the terminal, stripping the quarantine flag
+skips the dialog altogether:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/ClipArk.app
 ```
+
+> [!TIP]
+> A build that refuses to open at all with *"ClipArk is damaged and can't be opened"* — a
+> dialog with no **Open Anyway** button — predates ad-hoc signing. Download the latest
+> release; that one is fixed and should not come back.
 
 Every release ships a `SHA256SUMS.txt`, so you can verify the download first:
 
@@ -96,8 +111,9 @@ shasum -a 256 -c SHA256SUMS.txt
 ```
 
 > [!NOTE]
-> macOS ties Accessibility permission to the exact binary it was granted to. Because
-> builds are unsigned, **you may need to re-grant Accessibility access after updating.**
+> macOS ties Accessibility permission to the exact binary it was granted to. An ad-hoc
+> signature changes with every build, so **you may need to re-grant Accessibility access
+> after updating.**
 > Remove the old ClipArk entry under *System Settings → Privacy & Security →
 > Accessibility* and add the new one — a stale entry silently does nothing.
 
@@ -126,8 +142,15 @@ To produce an app bundle instead:
 npm run tauri build
 ```
 
-The result lands in `src-tauri/target/release/bundle/`. Local builds are **unsigned**,
-exactly like released ones — see [Opening an unsigned build](#opening-an-unsigned-build).
+The result lands in `src-tauri/target/release/bundle/`. Local builds are **unsigned**;
+releases are signed ad-hoc, which is what stops macOS calling them damaged. To match:
+
+```bash
+APPLE_SIGNING_IDENTITY=- npm run tauri build
+```
+
+Either way the build is not notarised, so macOS still blocks the first launch — see
+[Opening an unverified build](#opening-an-unverified-build).
 
 **First run**
 

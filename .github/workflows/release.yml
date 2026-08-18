@@ -95,12 +95,29 @@ jobs:
           cat "$NOTES"
 
       # No tagName input, so the action builds and stops — the release is ours to create.
+      #
+      # APPLE_SIGNING_IDENTITY="-" signs the bundle ad-hoc. It does *not* remove the
+      # "Apple could not verify ClipArk is free of malware" dialog — only notarisation
+      # does, and that needs a paid Developer ID. It fixes the harder failure underneath
+      # it: without an identity Tauri never runs codesign on the .app at all, so the
+      # bundle ships with `Sealed Resources=none` and only the per-slice signature the
+      # linker wrote — which `lipo` invalidated when it merged the two architectures.
+      # macOS reports that as "ClipArk is damaged and can't be opened", a dialog with no
+      # Open Anyway button and no way past it. Signed, the same build is merely
+      # unnotarised: blocked once, then openable from Privacy & Security.
+      #
+      # Tauri signs the .app before it packages the .dmg, so this has to be set on the
+      # build step — re-signing afterwards would leave the copy inside the image untouched.
       - name: Build universal app bundle
         uses: tauri-apps/tauri-action@v0
+        env:
+          APPLE_SIGNING_IDENTITY: "-"
         with:
           args: --target universal-apple-darwin
 
-      - name: Checksum the disk image
+      # Everything is checked against the app *inside the mounted image* rather than the
+      # build-tree copy beside it, because the image is what a user actually downloads.
+      - name: Verify and checksum the disk image
         id: dist
         run: |
           set -euo pipefail
@@ -112,22 +129,47 @@ jobs:
             ls -la "$DIR" || true
             exit 1
           fi
-          ( cd "$DIR" && shasum -a 256 "${{ steps.v.outputs.dmg }}" > SHA256SUMS.txt )
-          cat "$DIR/SHA256SUMS.txt"
-          # Proves the slices were actually lipo'd together rather than a single arch
-          # being bundled under a "universal" name.
-          BIN="$BUNDLE/macos/ClipArk.app/Contents/MacOS/ClipArk"
-          if [ ! -f "$BIN" ]; then
-            echo "::error::expected $BIN"
-            find "$BUNDLE" -maxdepth 3
+
+          MOUNT="$(mktemp -d)"
+          hdiutil attach "$DMG" -nobrowse -readonly -mountpoint "$MOUNT" > /dev/null
+          trap 'hdiutil detach "$MOUNT" -quiet || true' EXIT
+
+          APP="$MOUNT/ClipArk.app"
+          if [ ! -d "$APP" ]; then
+            echo "::error::expected ClipArk.app inside $DMG"
+            ls -la "$MOUNT" || true
             exit 1
           fi
+          # Read the name rather than hardcoding it: the bundle executable is the Cargo
+          # bin name ("clipark"), not productName, and a rename would pass silently on a
+          # case-insensitive runner filesystem.
+          EXEC="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Contents/Info.plist")"
+          BIN="$APP/Contents/MacOS/$EXEC"
+
+          # Proves the slices were actually lipo'd together rather than a single arch
+          # being bundled under a "universal" name.
           ARCHS="$(lipo -archs "$BIN")"
           echo "architectures: $ARCHS"
           case "$ARCHS" in
             *x86_64*arm64*|*arm64*x86_64*) ;;
             *) echo "::error::expected a universal binary, got '$ARCHS'"; exit 1 ;;
           esac
+
+          # The gate that matters. An unsigned bundle installs fine and then refuses to
+          # launch as "damaged"; fail here rather than on a user's Mac. Expect
+          # "adhoc" flags and a sealed resource count — never "not signed at all".
+          codesign -dv --verbose=2 "$APP" 2>&1 | sed 's/^/  /'
+          if ! codesign --verify --deep --strict --verbose=2 "$APP"; then
+            echo "::error::the app inside $DMG carries no valid signature"
+            exit 1
+          fi
+
+          # Recorded, never enforced: ad-hoc builds are not notarised, so Gatekeeper
+          # rejects them by design. Logged so the reason stays visible in the run.
+          spctl -a -vvv -t exec "$APP" 2>&1 | sed 's/^/  /' || true
+
+          ( cd "$DIR" && shasum -a 256 "${{ steps.v.outputs.dmg }}" > SHA256SUMS.txt )
+          cat "$DIR/SHA256SUMS.txt"
           echo "dir=$DIR" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact (build-only run)
