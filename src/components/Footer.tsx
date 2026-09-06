@@ -32,7 +32,7 @@ export function Footer({ count, autoPaste, trackingPaused, showingSettings }: Fo
           <>
             <Hint keys="⏎" label={autoPaste ? "Paste" : "Copy & close"} />
             {hints.map(([keys, label]) => (
-              <Hint key={keys} keys={keys} label={label} />
+              <Hint key={keys} keys={keys} label={keys === "⌘1-9" && !autoPaste ? "Quick copy" : label} />
             ))}
           </>
         )}

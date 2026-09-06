@@ -71,7 +71,7 @@ toolchain.
 1. Abra o `.dmg` e arraste o **ClipArk** para `Applications`.
 2. Abra o app — veja [Abrindo um build não verificado](#abrindo-um-build-não-verificado)
    logo abaixo, porque o macOS vai bloquear a primeira tentativa.
-3. Conceda o acesso de **Acessibilidade** quando for pedido, se quiser que o
+3. Ative o acesso opcional de **Acessibilidade** em *Settings → Pasting*, se quiser que o
    <kbd>⏎</kbd> cole por você.
 
 #### Abrindo um build não verificado
@@ -160,7 +160,7 @@ abertura — veja [Abrindo um build não verificado](#abrindo-um-build-não-veri
    proposital, e é justamente o que permite à colagem automática devolver o foco ao app
    anterior.
 2. Aperte <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd> para abrir o launcher.
-3. Conceda acesso de **Acessibilidade** quando for solicitado, ou em *Settings → Pasting*.
+3. Para colar automaticamente, ative **Acessibilidade** em *Settings → Pasting*.
    Sem isso o ClipArk ainda copia; ele só não consegue colar por você. Veja
    [Colagem automática](#-colagem-automática).
 
@@ -241,8 +241,9 @@ copia — coloca o conteúdo onde você estava digitando.
 
 > [!IMPORTANT]
 > O passo 4 exige permissão de **Acessibilidade** — *Ajustes do Sistema → Privacidade e
-> Segurança → Acessibilidade*. O ClipArk pede na primeira vez e oferece um botão em
-> *Settings → Pasting*. Nenhuma outra parte do app precisa dessa permissão.
+> Segurança → Acessibilidade*. Abra pelos controles em *Settings → Pasting*; o ClipArk
+> verifica a permissão automaticamente. Sem acesso, Enter e ⌘1–9 copiam e fecham:
+> pressione ⌘V no app de destino. O botão Copy e o menu de cada item também permitem copiar sem permissão.
 
 Prefere sem isso? Desligue *Paste into the previous app on ⏎* e a tecla <kbd>⏎</kbd> volta a
 apenas copiar e fechar.
@@ -457,7 +458,7 @@ Ideias, não promessas. Ordenadas mais ou menos pelo quanto melhorariam o uso di
 - [ ] Atalhos personalizáveis
 - [ ] Importar / exportar
 - [ ] Modo claro
-- [ ] Releases assinadas e notarizadas — os downloads hoje não são assinados
+- [ ] Releases assinadas e notarizadas — os downloads hoje usam assinatura ad-hoc
 - [ ] Paridade com Windows e Linux
 
 ---

@@ -70,7 +70,7 @@ universal build, Apple silicon and Intel, macOS 11 or newer. No clone, no toolch
 1. Open the `.dmg` and drag **ClipArk** into `Applications`.
 2. Launch it — see [Opening an unverified build](#opening-an-unverified-build) below,
    because macOS will block the first attempt.
-3. Grant **Accessibility** access when prompted if you want <kbd>⏎</kbd> to paste for you.
+3. Enable optional **Accessibility** access from *Settings → Pasting* if you want <kbd>⏎</kbd> to paste for you.
 
 #### Opening an unverified build
 
@@ -157,7 +157,7 @@ Either way the build is not notarised, so macOS still blocks the first launch �
 1. ClipArk starts in the menu bar. There is no Dock icon and no ⌘-Tab entry — that is
    deliberate, and it is what lets auto-paste hand focus back to your previous app.
 2. Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd> to open the launcher.
-3. Grant **Accessibility** access when prompted, or from *Settings → Pasting*. Without it
+3. Enable optional **Accessibility** access from *Settings → Pasting*. Without it
    ClipArk still copies; it just cannot paste for you. See [Auto-paste](#-auto-paste).
 
 ---
@@ -236,8 +236,9 @@ puts the clip where you were typing.
 
 > [!IMPORTANT]
 > Step 4 requires **Accessibility** permission — *System Settings → Privacy & Security →
-> Accessibility*. ClipArk prompts for it on first use and offers a button in
-> *Settings → Pasting*. Nothing else in the app needs it.
+> Accessibility*. Open it from *Settings → Pasting*; ClipArk checks access automatically.
+> Without access, Enter and ⌘1–9 copy and close: press ⌘V in your destination app.
+> Copy is also available on each card and in its context menu. No permission is needed to copy.
 
 Prefer to keep it off? Turn off *Paste into the previous app on ⏎* and <kbd>⏎</kbd>
 falls back to copy-and-close.
@@ -452,7 +453,7 @@ Ideas, not promises. Ordered roughly by how much they'd improve daily use.
 - [ ] Customisable shortcuts
 - [ ] Import / export
 - [ ] Light mode
-- [ ] Signed and notarised releases — downloads are currently unsigned
+- [ ] Signed and notarised releases — downloads currently use ad-hoc signing
 - [ ] Windows and Linux parity
 
 ---

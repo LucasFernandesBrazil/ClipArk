@@ -15,7 +15,7 @@
    xattr -dr com.apple.quarantine /Applications/ClipArk.app
    ```
 
-4. Grant **Accessibility** access when prompted, or from *Settings → Pasting*, if you want
+4. Enable optional **Accessibility** access from *Settings → Pasting*, if you want
    <kbd>⏎</kbd> to paste into the app you came from.
 
 Verify the download if you like:

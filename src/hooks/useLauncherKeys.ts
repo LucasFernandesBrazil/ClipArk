@@ -58,6 +58,10 @@ export function useLauncherKeys(handlers: LauncherKeyHandlers) {
         return;
       }
 
+      // Let settings controls and action buttons retain native keyboard navigation.
+      if (handlers.count === 0 || (event.target instanceof HTMLElement &&
+          event.target.closest("button, select, input[type=checkbox], summary, a"))) return;
+
       if (event.key === "Tab") {
         event.preventDefault();
         handlers.onCycleFilter(event.shiftKey ? -1 : 1);

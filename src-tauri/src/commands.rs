@@ -155,16 +155,20 @@ pub fn copy_clip(app: AppHandle, state: State<'_, AppState>, id: String) -> Comm
 /// Hides the launcher first so macOS reactivates that app before the keystroke lands.
 #[tauri::command]
 pub fn paste_clip(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<()> {
+    // Copying needs no Accessibility permission. Always make the clip reusable.
+    copy_clip(app.clone(), state, id)?;
+
     if !crate::paste::accessibility_granted() {
         return Err(crate::paste::ACCESSIBILITY_DENIED.to_string());
     }
 
-    copy_clip(app.clone(), state, id)?;
-
     if let Some(window) = app.get_webview_window("main") {
         // The blur handler would race with us hiding the window ourselves.
         state_suppress_blur(&app, true);
-        window.hide().map_err(to_string)?;
+        if let Err(error) = window.hide() {
+            state_suppress_blur(&app, false);
+            return Err(to_string(error));
+        }
     }
 
     let result = crate::paste::paste_to_frontmost();
@@ -178,8 +182,19 @@ pub fn accessibility_status() -> bool {
 }
 
 #[tauri::command]
-pub fn request_accessibility() -> bool {
-    crate::paste::request_accessibility()
+pub fn request_accessibility() -> CommandResult<bool> {
+    let trusted = crate::paste::request_accessibility();
+    #[cfg(target_os = "macos")]
+    if !trusted {
+        let status = std::process::Command::new("/usr/bin/open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+            .status()
+            .map_err(to_string)?;
+        if !status.success() {
+            return Err("Could not open Accessibility settings".to_string());
+        }
+    }
+    Ok(trusted)
 }
 
 fn state_suppress_blur(app: &AppHandle, suppress: bool) {

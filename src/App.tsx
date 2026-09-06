@@ -10,6 +10,7 @@ import { IconButton } from "./components/IconButton";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Toast } from "./components/Toast";
 import { useDebouncedEffect } from "./hooks/useDebouncedEffect";
+import { useAccessibility } from "./hooks/useAccessibility";
 import { useLauncherKeys } from "./hooks/useLauncherKeys";
 import { previewText } from "./lib/format";
 import {
@@ -20,7 +21,6 @@ import {
   hideWindow,
   moveClipToCategory,
   pasteClip,
-  requestAccessibility,
   seedDevData,
   toggleFavorite,
   updateCategory,
@@ -74,6 +74,7 @@ export default function App() {
 
   const showingSettings = filter === "settings";
   const modalOpen = categoryDialog !== null || confirmation !== null;
+  const accessibility = useAccessibility();
   const autoPaste = settings?.autoPaste ?? true;
   const selectedIndex = useMemo(() => clips.findIndex((clip) => clip.id === selectedId), [clips, selectedId]);
 
@@ -119,29 +120,33 @@ export default function App() {
 
   const handlePaste = useCallback(
     async (id: string) => {
-      if (!autoPaste) {
-        await copyClip(id);
-        await hideWindow();
-        return;
-      }
       try {
+        if (!autoPaste || accessibility.trusted !== true) {
+          await copyClip(id);
+          await hideWindow();
+          return;
+        }
         await pasteClip(id);
       } catch (pasteError) {
         if (String(pasteError).includes(ACCESSIBILITY_DENIED)) {
-          setToast("Grant Accessibility access to paste automatically — see Settings.");
-          await requestAccessibility();
+          void accessibility.refresh();
+          setToast("Copied. Switch to your app and press ⌘V.");
           return;
         }
         setToast(String(pasteError));
       }
     },
-    [autoPaste],
+    [autoPaste, accessibility.trusted, accessibility.refresh],
   );
 
   const handleCopy = useCallback(async (id: string) => {
-    await copyClip(id);
-    setToast("Copied to clipboard");
-    await refreshClips();
+    try {
+      await copyClip(id);
+      setToast("Copied. Switch to your app and press ⌘V.");
+      await refreshClips();
+    } catch (error) {
+      setToast(`Could not copy: ${String(error)}`);
+    }
   }, [refreshClips]);
 
   const handleFavorite = useCallback(async (id: string) => {
@@ -341,8 +346,16 @@ export default function App() {
           )}
         </header>
 
+        {!showingSettings && autoPaste && accessibility.trusted !== true ? (
+          <div className="mx-3 mb-2 flex shrink-0 items-center justify-between gap-3 rounded-chip bg-ark-raised px-3 py-2 text-caption">
+            <p>Enter copies and closes. Then press ⌘V in your app. Auto-paste is optional.</p>
+            <button type="button" className="shrink-0 text-ark-accent" onClick={() => setFilter("settings")}>Set up auto-paste</button>
+          </div>
+        ) : null}
+
         {showingSettings ? (
           <SettingsPanel
+            accessibility={accessibility}
             settings={settings}
             categories={categories}
             onSave={saveSettings}
@@ -378,6 +391,8 @@ export default function App() {
                 index={index}
                 selected={clip.id === selectedId}
                 onSelect={() => setSelectedId(clip.id)}
+                autoPaste={autoPaste && accessibility.trusted === true}
+                onCopy={() => void handleCopy(clip.id)}
                 onPaste={() => void handlePaste(clip.id)}
                 onFavorite={() => void handleFavorite(clip.id)}
                 onDelete={() => handleDelete(clip.id)}
@@ -389,7 +404,7 @@ export default function App() {
 
         <Footer
           count={clips.length}
-          autoPaste={autoPaste}
+          autoPaste={autoPaste && accessibility.trusted === true}
           trackingPaused={settings?.trackingPaused ?? false}
           showingSettings={showingSettings}
         />

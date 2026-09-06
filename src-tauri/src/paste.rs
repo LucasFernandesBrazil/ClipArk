@@ -23,7 +23,7 @@ pub fn accessibility_granted() -> bool {
 
 #[cfg(not(target_os = "macos"))]
 pub fn accessibility_granted() -> bool {
-    true
+    false
 }
 
 /// Shows the native "grant Accessibility access" prompt. Returns the status as of
@@ -35,7 +35,7 @@ pub fn request_accessibility() -> bool {
 
 #[cfg(not(target_os = "macos"))]
 pub fn request_accessibility() -> bool {
-    true
+    false
 }
 
 /// Posts Cmd+V to the system. Call *after* the launcher window is hidden.

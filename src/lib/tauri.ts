@@ -44,7 +44,7 @@ export function copyClip(id: string) {
   return invoke<void>("copy_clip", { id });
 }
 
-/** Rejection reason from `pasteClip` when macOS Accessibility access is missing. */
+/** Rejection from `pasteClip` after copying when Accessibility access is missing. */
 export const ACCESSIBILITY_DENIED = "accessibility-denied";
 
 /** Copies the clip and pastes it into the previously focused app. Hides the launcher. */

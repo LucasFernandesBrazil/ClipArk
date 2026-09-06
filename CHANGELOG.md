@@ -8,6 +8,21 @@ ClipArk is pre-1.0, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+### Fixed
+
+- Enter, double-click and quick selection now copy without Accessibility permission;
+  users can immediately paste with ⌘V in their destination app. The backend also copies
+  before checking access, preserving the clip if permission changes during use.
+- Window blur suppression is restored if hiding the launcher fails.
+- Settings controls keep native Tab navigation.
+
+### Added
+
+- Copy actions on clip cards and their context menus, with clipboard error feedback.
+- Optional auto-paste setup with a direct Accessibility settings button, automatic
+  permission checks, and recovery instructions for ad-hoc signed updates.
+- Regression tests for permission, clipboard and setup flows, run in CI.
+
 ## [0.2.0] - 2026-08-18
 
 ### Fixed

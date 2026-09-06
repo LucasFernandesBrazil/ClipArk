@@ -1,9 +1,12 @@
-import { Check, PauseCircle, PlayCircle, Plus, RotateCcw, ShieldAlert, Trash2 } from "lucide-react";
+import { PauseCircle, PlayCircle, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { accessibilityStatus, appVersion, requestAccessibility } from "../lib/tauri";
+import { appVersion } from "../lib/tauri";
+import type { useAccessibility } from "../hooks/useAccessibility";
 import type { AppSettings, Category } from "../types";
+import { AccessibilitySetup } from "./AccessibilitySetup";
 
 type SettingsPanelProps = {
+  accessibility: ReturnType<typeof useAccessibility>;
   settings: AppSettings | null;
   categories: Category[];
   onSave: (settings: AppSettings) => Promise<void>;
@@ -30,6 +33,7 @@ const fallback: AppSettings = {
 };
 
 export function SettingsPanel({
+  accessibility,
   settings,
   categories,
   onSave,
@@ -40,12 +44,7 @@ export function SettingsPanel({
   onSeed,
 }: SettingsPanelProps) {
   const active = settings ?? fallback;
-  const [trusted, setTrusted] = useState<boolean | null>(null);
   const [version, setVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    void accessibilityStatus().then(setTrusted);
-  }, []);
 
   // Outside a Tauri window (plain `npm run dev`) this rejects; the label just stays hidden.
   useEffect(() => {
@@ -62,25 +61,7 @@ export function SettingsPanel({
             checked={active.autoPaste}
             onChange={(checked) => void onSave({ ...active, autoPaste: checked })}
           />
-          {active.autoPaste ? (
-            trusted ? (
-              <p className="flex items-center gap-1.5 text-caption text-[#30d158]">
-                <Check className="h-3 w-3" aria-hidden />
-                Accessibility access granted.
-              </p>
-            ) : (
-              <div className="flex">
-                <button
-                  type="button"
-                  onClick={() => void requestAccessibility().then(setTrusted)}
-                  className="flex items-center gap-1.5 rounded-chip bg-ark-dangerSoft px-2.5 py-1.5 text-caption font-medium text-ark-danger transition-colors hover:brightness-110"
-                >
-                  <ShieldAlert className="h-3 w-3" aria-hidden />
-                  Grant Accessibility access
-                </button>
-              </div>
-            )
-          ) : null}
+          <AccessibilitySetup {...accessibility} />
         </Group>
 
         <Group title="General">

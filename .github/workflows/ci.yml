@@ -31,6 +31,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Test setup and clipboard flows
+        run: npm test
+
       - name: Build
         run: npm run build
 

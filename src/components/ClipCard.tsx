@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Braces, Check, Code2, Link2, Mail, Palette, Star, Trash2, Type } from "lucide-react";
+import { Braces, Check, Code2, Copy, Link2, Mail, Palette, Star, Trash2, Type } from "lucide-react";
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { hostname, previewText, relativeTime, typeLabel } from "../lib/format";
 import type { Category, Clip, ClipType } from "../types";
@@ -12,13 +12,15 @@ type ClipCardProps = {
   index: number;
   onSelect: () => void;
   onPaste: () => void;
+  onCopy: () => void;
+  autoPaste: boolean;
   onFavorite: () => void;
   onDelete: () => void;
   onMove: (categoryId: string | null) => void;
 };
 
 export const ClipCard = forwardRef<HTMLElement, ClipCardProps>(function ClipCard(
-  { clip, categories, selected, index, onSelect, onPaste, onFavorite, onDelete, onMove },
+  { clip, categories, selected, index, onSelect, onPaste, onCopy, autoPaste, onFavorite, onDelete, onMove },
   ref,
 ) {
   const Icon = typeIcon(clip.type);
@@ -115,8 +117,11 @@ export const ClipCard = forwardRef<HTMLElement, ClipCardProps>(function ClipCard
         {clip.copiedCount > 1 ? <span className="tabular-nums">·  used {clip.copiedCount}×</span> : null}
       </footer>
 
-      {/* Hover actions. Paste is the click/Enter action, so it is not repeated here. */}
-      <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      {/* Copy remains available independently of auto-paste permission. */}
+      <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <HoverAction label="Copy" onClick={onCopy}>
+          <Copy className="h-3.5 w-3.5" aria-hidden />
+        </HoverAction>
         <HoverAction label={clip.favorite ? "Unfavorite" : "Favorite"} onClick={onFavorite}>
           <Star className="h-3.5 w-3.5" fill={clip.favorite ? "currentColor" : "none"} aria-hidden />
         </HoverAction>
@@ -138,7 +143,8 @@ export const ClipCard = forwardRef<HTMLElement, ClipCardProps>(function ClipCard
           onMouseDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
         >
-          <ContextButton onClick={() => runFromMenu(onPaste)}>Paste</ContextButton>
+          <ContextButton onClick={() => runFromMenu(onPaste)}>{autoPaste ? "Paste" : "Copy & close"}</ContextButton>
+          <ContextButton onClick={() => runFromMenu(onCopy)}>Copy</ContextButton>
           <ContextButton onClick={() => runFromMenu(onFavorite)}>
             {clip.favorite ? "Unfavorite" : "Favorite"}
           </ContextButton>
