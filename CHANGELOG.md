@@ -8,6 +8,8 @@ ClipArk is pre-1.0, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-06
+
 ### Fixed
 
 - Enter, double-click and quick selection now copy without Accessibility permission;
@@ -87,6 +89,7 @@ First public release. macOS only, distributed as an unsigned universal disk imag
   after this release — see 0.2.0.)
 - Text clips only — images and files are not captured yet.
 
-[Unreleased]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/LucasFernandesBrazil/ClipArk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LucasFernandesBrazil/ClipArk/releases/tag/v0.1.0
